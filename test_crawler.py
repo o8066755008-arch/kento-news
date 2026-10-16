@@ -7,6 +7,7 @@ from unittest import mock
 import build_site
 import crawler
 import digest
+import notify
 import thumbnails
 import fanclub
 
@@ -142,12 +143,36 @@ class CrawlerTest(unittest.TestCase):
         self.assertIn("Snow Man\n約300万人", snip)
         self.assertNotIn("関係ない", snip)
 
+    def test_page_snippets_keep_plain_number_rows(self):
+        html = "<table><tr><td>Snow Man</td><td>1,942,000</td></tr><tr><td>中島健人</td><td>100,000</td></tr></table>"
+        snip = fanclub.page_snippets(fanclub.page_text(html), ["Snow Man", "中島健人"])
+        self.assertIn("1,942,000", snip)
+        self.assertIn("100,000", snip)
+
     def test_page_date_prefers_modified(self):
         raw = ('<meta property="article:published_time" content="2026-05-01T10:00:00+09:00">'
                '<meta property="article:modified_time" content="2026-10-10T08:00:00+09:00">')
         self.assertEqual(fanclub.page_date(raw), "2026-10-10")
         self.assertEqual(fanclub.page_date('{"datePublished":"2026-05-20T00:00:00"}'), "2026-05-20")
         self.assertIsNone(fanclub.page_date("<html></html>"))
+
+    def test_notify_changes(self):
+        prev = {"topics": ["国内|A"], "youtube": 258000, "fc": 100000, "member_no": 100000,
+                "fc_rank": 14, "yt_rank": 14}
+        cur = dict(prev, topics=["国内|A", "海外|ソウル公演"], youtube=261000, fc_rank=13)
+        lines = notify.changes(prev, cur, {})
+        self.assertEqual(lines, ["🌏 ソウル公演", "▶️ YouTube 登録者が 26万人を突破", "📈 FC 会員数の順位 14位 → 13位"])
+        self.assertEqual(notify.changes(prev, dict(prev, youtube=259000), {}), [])
+        self.assertEqual(notify.changes(prev, cur, {"new_topics": False, "rank_change": False}),
+                         ["▶️ YouTube 登録者が 26万人を突破"])
+
+    def test_notify_ranks_skip_ended_groups(self):
+        for grp, metric, v in [("嵐", "press", 3000000), ("Snow Man", "estimate", 1942000),
+                               ("中島健人", "estimate", 100000), ("中島健人", "member_no", 100000),
+                               ("中島健人", "youtube", 258000), ("NEWS", "youtube", 293000)]:
+            fanclub.record(self.conn, grp, metric, v, "s", "2026-10-10")
+        st = notify.current_state(self.conn, [{"name": "嵐", "ended": True}])
+        self.assertEqual((st["fc"], st["fc_rank"], st["yt_rank"]), (100000, 2, 2))
 
     def test_find_image(self):
         page = '<head><meta content="/img/a.jpg?x=1&amp;y=2" property="og:image"></head>'

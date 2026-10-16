@@ -169,9 +169,10 @@ def page_snippets(text: str, names: list[str]) -> str:
     lines = text.splitlines()
     keep = set()
     for i, line in enumerate(lines):
-        if re.search(r"\d", line) and re.search(r"万|人|名|会員", line):
+        # 「194万人」のような書き方と、表によくある「1,942,000」のような人数だけの書き方の両方を拾う
+        if re.search(r"\d", line) and re.search(r"万|人|名|会員|\d{1,3}(,\d{3})+", line):
             keep.update({i - 1, i, i + 1})
-        elif any(n in line for n in names) and re.search(r"会員|ファンクラブ|FC", line):
+        elif any(n in line for n in names):
             keep.add(i)
     return "\n".join(lines[i] for i in sorted(keep) if 0 <= i < len(lines))
 
@@ -220,7 +221,9 @@ def crawl_pages(conn, groups: list[dict], pages: list[dict]) -> None:
         except Exception as e:
             print(f"[ページ] {url} の取得に失敗しました: {e}", file=sys.stderr)
             continue
-        snippet = page_snippets(page_text(raw), names)
+        text = page_text(raw)
+        snippet = page_snippets(text, names)
+        print(f"[ページ] {url}: 本文 {len(text)} 文字 / 会員数らしい部分 {len(snippet)} 文字")
         digest = hashlib.sha256(snippet.encode()).hexdigest()
         if not snippet:
             print(f"[ページ] {url} に会員数の記述が見つかりません")

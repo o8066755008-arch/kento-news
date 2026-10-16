@@ -10,3 +10,19 @@ self.addEventListener("fetch", e => {
     return res;
   }).catch(() => caches.match(e.request)));
 });
+
+// 通知を受け取って表示する
+self.addEventListener("push", e => {
+  let d = {};
+  try { d = e.data ? e.data.json() : {}; } catch (_) { d = {body: e.data && e.data.text()}; }
+  e.waitUntil(self.registration.showNotification(d.title || "中島健人ニュース", {
+    body: d.body || "", icon: "icon.svg", badge: "icon.svg", data: {url: d.url || "./"},
+  }));
+});
+self.addEventListener("notificationclick", e => {
+  e.notification.close();
+  e.waitUntil(clients.matchAll({type: "window"}).then(list => {
+    const open = list.find(c => "focus" in c);
+    return open ? open.focus() : clients.openWindow(e.notification.data.url);
+  }));
+});

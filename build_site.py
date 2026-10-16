@@ -36,6 +36,7 @@ def build(conn, out: Path = SITE_DIR / "data.json", limit: int = 800) -> dict:
                    for g in config["groups"]}
     data = {"updated": time.strftime("%Y-%m-%d %H:%M"), "news": news, "digest": digest, "fanclub": fanclub,
             "groups_meta": groups_meta,
+            "vapid_public_key": config.get("notify", {}).get("vapid_public_key", ""),
             "fan_form_url": config.get("fan_form_url", "")}
     out.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
     return data

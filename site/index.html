@@ -103,6 +103,9 @@ svg.spark{width:100%;height:46px;margin-top:6px}
 .tile .rk{display:inline-block;background:var(--chip);color:var(--accent);border-radius:6px;padding:1px 6px;font-size:.72rem;font-weight:700;margin-top:6px}
 .tile svg.spark{height:34px}
 .tile .cty{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;font-size:.85rem}
+.pbtn{margin-top:8px;border:0;border-radius:999px;background:var(--accent);color:#fff;font:inherit;font-weight:700;font-size:.85rem;padding:8px 16px}
+.pbtn.ghost{background:var(--chip);color:var(--accent)}
+.tile textarea{width:100%;margin-top:8px;font-size:.7rem;border:1px solid var(--line);border-radius:8px;padding:8px;background:var(--bg);color:var(--text)}
 /* ランキング */
 .rank .seg{display:flex;gap:6px;margin:8px 0 12px}
 .rank .seg button{flex:1;border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:999px;padding:6px 0;font:inherit;font-size:.82rem}
@@ -209,7 +212,59 @@ function renderDash() {
     <div class="vv">${d30.length ? Math.round(abroad30.length / d30.length * 100) : 0}<small>%</small></div>
     <div class="sub">30日間の記事のうち海外メディア</div>
     <div class="cty">${top.map(([l, c]) => `<span>${FLAG[l] || ""} ${c}</span>`).join("")}</div></div>`;
-  el.innerHTML = `<h2 class="sec">${DASH_NAME} ダッシュボード</h2><div class="dash">${fcTile}${ytTile}${newsTile}${abroadTile}</div>`;
+  el.innerHTML = `<h2 class="sec">${DASH_NAME} ダッシュボード</h2><div class="dash">${fcTile}${ytTile}${newsTile}${abroadTile}
+    <div class="tile wide" id="push"></div></div>`;
+  renderPush();
+}
+
+// ---- 通知（Web Push）
+const isStandalone = () => navigator.standalone || matchMedia("(display-mode: standalone)").matches;
+const b64ToBytes = b64 => {
+  const s = atob((b64 + "=".repeat((4 - b64.length % 4) % 4)).replace(/-/g, "+").replace(/_/g, "/"));
+  return Uint8Array.from(s, c => c.charCodeAt(0));
+};
+
+async function renderPush(subText) {
+  const el = document.getElementById("push");
+  if (!el) return;
+  const head = `<div class="lb">🔔 通知</div>`;
+  if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) {
+    el.innerHTML = head + (isStandalone() ? `<div class="sub">この端末では通知を使えません（iPadOS / iOS 16.4 以降が必要です）。</div>`
+      : `<div class="sub">通知を受け取るには、Safari の共有ボタン →「ホーム画面に追加」で追加したアプリから開いてください。</div>`);
+    return;
+  }
+  let sub = null;
+  try { sub = await (await navigator.serviceWorker.ready).pushManager.getSubscription(); } catch (_) {}
+  if (sub && subText === undefined) {
+    el.innerHTML = head + `<div class="sub">通知はオンです。新しい話題や、登録者・会員数の区切り、順位の変化をお知らせします。</div>
+      <button class="pbtn ghost" data-push="show">登録用の文字列をもう一度表示</button>`;
+    return;
+  }
+  if (subText) {
+    el.innerHTML = head + `<div class="sub"><b>最後のひと手間</b>：下の文字列をコピーして、GitHub の Secrets に
+      <b>PUSH_SUBSCRIPTIONS</b> という名前で登録してください（1回だけ）。</div>
+      <textarea readonly rows="4" id="subtext">${esc(subText)}</textarea>
+      <button class="pbtn" data-push="copy">コピー</button>`;
+    return;
+  }
+  el.innerHTML = head + `<div class="sub">新しい話題が出たときや、YouTube 登録者・会員数が1万人の区切りを超えたとき、順位が変わったときにお知らせします（1日1通まで）。</div>
+    <button class="pbtn" data-push="on">通知をオンにする</button>`;
+}
+
+async function turnOnPush() {
+  const el = document.getElementById("push");
+  try {
+    if (await Notification.requestPermission() !== "granted") {
+      el.querySelector(".sub").textContent = "通知が許可されませんでした。iPad の設定 → 通知 → このアプリ から許可できます。";
+      return;
+    }
+    const reg = await navigator.serviceWorker.ready;
+    const sub = (await reg.pushManager.getSubscription()) ||
+      await reg.pushManager.subscribe({userVisibleOnly: true, applicationServerKey: b64ToBytes(data.vapid_public_key)});
+    renderPush(JSON.stringify(sub));
+  } catch (e) {
+    el.querySelector(".sub").textContent = "通知をオンにできませんでした: " + e.message;
+  }
 }
 
 function renderSlides(d) {
@@ -373,6 +428,18 @@ document.addEventListener("click", e => {
     document.getElementById("news").hidden = tab.dataset.tab !== "news";
     document.getElementById("fanclub").hidden = tab.dataset.tab !== "fanclub";
     window.scrollTo(0, 0);
+  }
+  const pb = e.target.closest("[data-push]");
+  if (pb) {
+    const act = pb.dataset.push;
+    if (act === "on") turnOnPush();
+    if (act === "show") navigator.serviceWorker.ready.then(r => r.pushManager.getSubscription()).then(s => renderPush(JSON.stringify(s)));
+    if (act === "copy") {
+      const t = document.getElementById("subtext");
+      (navigator.clipboard ? navigator.clipboard.writeText(t.value) : Promise.reject()).then(
+        () => pb.textContent = "コピーしました ✓",
+        () => { t.select(); document.execCommand("copy"); pb.textContent = "コピーしました ✓"; });
+    }
   }
   const ot = e.target.closest("[data-open-topic]");
   if (ot) {
