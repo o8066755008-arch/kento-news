@@ -183,6 +183,10 @@ def save_events(conn, events: list[dict], sources: list[dict]) -> int:
         dup = same_event(conn, e["title"], day)
         if dup:
             # 日付のない方を、日付のある同じ予定で置き換える
+            # 同じ情報源で、前は一覧ページしか分からなかった予定に詳しいページが見つかったら差し替える
+            if tier == (dup[1] or NEWS_TIER) and src.get("url") and src["url"] != src.get("page_url", src["url"]):
+                conn.execute("UPDATE events SET url = ? WHERE id = ? AND url = ?",
+                             (src["url"], dup[0], src.get("page_url")))
             if (tier < (dup[1] or NEWS_TIER) and (day or not dup[2])) or (day and not dup[2]):
                 conn.execute("UPDATE events SET title=?, kind=?, date=?, date_text=?, place=?, region=?, url=?, "
                              "source=?, tier=?, source_label=?, year_certain=? WHERE id = ?", values + (dup[0],))
@@ -302,7 +306,7 @@ def from_pages(conn, pages: list[dict]) -> None:
         result = translate.ask_json(SYSTEM, f"今日は {today} です。\n0. {snippet}", SCHEMA)
         if result is None:
             continue
-        base = {"url": url, "source": page.get("note", url), "published": fanclub.page_date(raw) or "",
+        base = {"url": url, "page_url": url, "source": page.get("note", url), "published": fanclub.page_date(raw) or "",
                 "tier": page.get("tier", NEWS_TIER), "label": page.get("label", "")}
         sources = []
         for i, e in enumerate(result["events"]):
