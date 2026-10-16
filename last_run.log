@@ -1,60 +1,86 @@
+[Bing en-US] 取得に失敗しました: not well-formed (invalid token): line 1, column 41
+[Bing zh-TW] 取得に失敗しました: not well-formed (invalid token): line 1, column 41
 重複の整理 0 件
 [Google JP] 取得 100 件 / 新規 0 件
 [Google KR] 取得 60 件 / 新規 0 件
 [Google US] 取得 100 件 / 新規 0 件
-[Google SG] 取得 100 件 / 新規 1 件
+[Google SG] 取得 100 件 / 新規 0 件
 [Google PH] 取得 100 件 / 新規 0 件
-[Google TW] 取得 100 件 / 新規 0 件
+[Google TW] 取得 100 件 / 新規 1 件
 [Google HK] 取得 100 件 / 新規 0 件
 [Google TH] 取得 35 件 / 新規 0 件
 [Google VN] 取得 9 件 / 新規 0 件
 [Google ID] 取得 51 件 / 新規 0 件
-[Google MX] 取得 30 件 / 新規 0 件
+[Google MX] 取得 29 件 / 新規 0 件
 [Google BR] 取得 22 件 / 新規 0 件
-[Google FR] 取得 14 件 / 新規 0 件
+[Google FR] 取得 15 件 / 新規 1 件
 [Bing ja-JP] 取得 12 件 / 新規 1 件
 [Bing ko-KR] 取得 10 件 / 新規 0 件
-[Bing en-US] 取得 9 件 / 新規 0 件
-[Bing zh-TW] 取得 12 件 / 新規 0 件
-[Bing th-TH] 取得 11 件 / 新規 1 件
+[Bing th-TH] 取得 12 件 / 新規 0 件
 翻訳 2 件
-[サムネイル] 80 件を確認 / 画像あり 0 件
+[サムネイル] 80 件を確認 / 画像あり 4 件
 [トピックス] 記事に変化がないため前回のまとめを使います
-[Wikipedia] 会員数の記述に変化はありません
-[YouTube] 木村拓哉 → チャンネル「木村拓哉」(UCE-lBtQTa3A8gYgbl8xRMig)
-[YouTube] Snow Man 4,440,000 人（Snow Man）
-[YouTube] King & Prince 1,880,000 人（King & Prince）
-[YouTube] Travis Japan 677,000 人（Travis Japan）
-[YouTube] 嵐 3,880,000 人（ARASHI）
-[YouTube] WEST. 916,000 人（WEST.）
+[YouTube] A.B.C-Z の公式チャンネルが見つかりません。groups.json に ID を書いてください
+[YouTube] 20th Century の公式チャンネルが見つかりません。groups.json に ID を書いてください
 [YouTube] 木村拓哉 2,420,000 人（木村拓哉）
-[YouTube] timelesz 1,230,000 人（timelesz [タイムレス]）
-[YouTube] Kis-My-Ft2 863,000 人（Kis-My-Ft2）
-[YouTube] SixTONES 2,730,000 人（SixTONES）
-[YouTube] 中島健人 258,000 人（中島健人 Official YouTube Channel）
 [YouTube] Hey! Say! JUMP 896,000 人（Hey! Say! JUMP）
+[YouTube] Kis-My-Ft2 863,000 人（Kis-My-Ft2）
 [YouTube] NEWS 293,000 人（にゅうちゅうぶ | NEWS official）
-[YouTube] Aぇ! group 653,000 人（Aぇ! group）
 [YouTube] なにわ男子 1,900,000 人（なにわ男子）
+[YouTube] King & Prince 1,880,000 人（King & Prince）
+[YouTube] SixTONES 2,730,000 人（SixTONES）
+[YouTube] Snow Man 4,440,000 人（Snow Man）
+[YouTube] Travis Japan 677,000 人（Travis Japan）
+[YouTube] Aぇ! group 653,000 人（Aぇ! group）
+[YouTube] timelesz 1,230,000 人（timelesz [タイムレス]）
+[YouTube] WEST. 916,000 人（WEST.）
+[YouTube] 中島健人 258,000 人（中島健人 Official YouTube Channel）
+[YouTube] 嵐 3,880,000 人（ARASHI）
 [Spotify] SPOTIFY_CLIENT_ID / SPOTIFY_CLIENT_SECRET が未設定です
-[推計] 木村拓哉 93,000 人（2026-10-17）: 17位.木村拓哉（FC会員数： 93,000 人）
-[推計] 中島健人 94,000 人（2026-10-17）: 16位.中島健人（FC会員数： 94,000   人）
-[推計] Travis Japan 282,000 人（2026-10-17）: 14位.Travis Japan（FC会員数： 282,000    人）
-[推計] Aぇ! group 333,000 人（2026-10-17）: 13位. Aぇ! group （FC会員数： 333,000 人）
-[推計] NEWS 460,000 人（2026-10-17）: 12位.NEWS（FC会員数：460,000人）
-[推計] Kis-My-Ft2 634,000 人（2026-10-17）: 11位.Kis-My-Ft2（FC会員数： 634,000    人）
-[推計] WEST. 660,000 人（2026-10-17）: 9位.WEST.（FC会員数： 660,000    人）
-[推計] SUPER EIGHT 844,000 人（2026-10-17）: 8位. SUPER EIGHT （FC会員数：844,000   人）
-[推計] Hey! Say! JUMP 940,000 人（2026-10-17）: 7位.Hey!Say!JUMP（FC会員数：940,000 人）
-[推計] なにわ男子 970,000 人（2026-10-17）: 6位.なにわ男子（FC会員数：970,000 人）
-[推計] timelesz 990,000 人（2026-10-17）: 5位.timelesz（FC会員数： 990,000  人）
-[推計] SixTONES 1,070,000 人（2026-10-17）: 4位.SixTONES（FC会員数： 1,070,000  人）
-[推計] King & Prince 1,145,000 人（2026-10-17）: 3位.King & Prince（FC会員数： 1,145,000  人）
-[推計] Snow Man 1,851,000 人（2026-10-17）: 2位.Snow Man（FC会員数： 1,851,000  人）
-[推計] 嵐 3,390,000 人（2026-10-17）: 1位.嵐（FC会員数：3,390,000   人）
-[ページ] https://report-newage.com/18785 から 15 件を記録しました
 [ページ] https://snowman-information.com/johnnys-fc/ から 0 件を記録しました
 [ページ] 読み取り対象（138 文字）の先頭: '【2026年10月更新】旧ジャニーズファンクラブ会員数ランキング - Snow Man Information\n" />\nSnow Man\n【2026年10月更新】旧ジャニーズファンクラブ会員数ランキング\n2026年10月10日\nSnow Man ファンクラブ会員数は コチラ'
+[site:report-newage.com] 河合郁人 6,000 人（2026-05-19）: 21位. 河合郁人 （FC会員数： 6,000  人）
+[site:report-newage.com] 中島裕翔 15,000 人（2026-05-19）: 20位. 中島裕翔 （FC会員数： 15,000  人）
+[site:report-newage.com] 横山裕 59,000 人（2026-05-19）: 19位. 横山裕 （FC会員数： 59,000  人）
+[site:report-newage.com] 20th Century 73,000 人（2026-05-19）: 18位.20th Century（FC会員数： 73,000  人）
+[site:report-newage.com] 木村拓哉 93,000 人（2026-05-19）: 17位.木村拓哉（FC会員数： 93,000 人）
+[site:report-newage.com] 中島健人 94,000 人（2026-05-19）: 16位.中島健人（FC会員数： 94,000   人）
+[site:report-newage.com] A.B.C-Z 100,000 人（2026-05-19）: 15位.A.B.C-Z（FC会員数： 100,000    人）
+[site:report-newage.com] Travis Japan 282,000 人（2026-05-19）: 14位.Travis Japan（FC会員数： 282,000    人）
+[site:report-newage.com] Aぇ! group 333,000 人（2026-05-19）: 13位. Aぇ! group （FC会員数： 333,000 人）
+[site:report-newage.com] NEWS 460,000 人（2026-05-19）: 12位.NEWS（FC会員数：460,000人）
+[site:report-newage.com] Kis-My-Ft2 634,000 人（2026-05-19）: 11位.Kis-My-Ft2（FC会員数： 634,000    人）
+[site:report-newage.com] WEST. 660,000 人（2026-05-19）: 9位.WEST.（FC会員数： 660,000    人）
+[site:report-newage.com] SUPER EIGHT 844,000 人（2026-05-19）: 8位. SUPER EIGHT （FC会員数：844,000   人）
+[site:report-newage.com] Hey! Say! JUMP 940,000 人（2026-05-19）: 7位.Hey!Say!JUMP（FC会員数：940,000 人）
+[site:report-newage.com] なにわ男子 970,000 人（2026-05-19）: 6位.なにわ男子（FC会員数：970,000 人）
+[site:report-newage.com] timelesz 990,000 人（2026-05-19）: 5位.timelesz（FC会員数： 990,000  人）
+[site:report-newage.com] SixTONES 1,070,000 人（2026-05-19）: 4位.SixTONES（FC会員数： 1,070,000  人）
+[site:report-newage.com] King & Prince 1,145,000 人（2026-05-19）: 3位.King & Prince（FC会員数： 1,145,000  人）
+[site:report-newage.com] Snow Man 1,851,000 人（2026-05-19）: 2位.Snow Man（FC会員数： 1,851,000  人）
+[site:report-newage.com] 嵐 3,390,000 人（2026-05-19）: 1位.嵐（FC会員数：3,390,000   人）
+[ページ] https://report-newage.com/18785 から 20 件を記録しました
 [手動] 中島健人 member_no 100,000（2026-09-30）
+[手動] Snow Man estimate 1,942,000（2026-10-10）
+[手動] King & Prince estimate 1,160,000（2026-10-10）
+[手動] SixTONES estimate 1,130,000（2026-10-10）
+[手動] timelesz estimate 1,010,000（2026-10-10）
+[手動] なにわ男子 estimate 1,002,000（2026-10-10）
+[手動] Hey! Say! JUMP estimate 960,000（2026-10-10）
+[手動] SUPER EIGHT estimate 850,000（2026-10-10）
+[手動] Kis-My-Ft2 estimate 640,000（2026-10-10）
+[手動] NEWS estimate 460,000（2026-10-10）
+[手動] Aぇ! group estimate 350,000（2026-10-10）
+[手動] Travis Japan estimate 300,000（2026-10-10）
+[手動] 櫻井翔 estimate 140,000（2026-10-10）
+[手動] A.B.C-Z estimate 101,000（2026-10-10）
+[手動] 中島健人 estimate 100,000（2026-10-10）
+[手動] 木村拓哉 estimate 95,000（2026-10-10）
+[手動] 相葉雅紀 estimate 90,000（2026-10-10）
+[手動] 20th Century estimate 74,000（2026-10-10）
+[手動] 横山裕 estimate 59,000（2026-10-10）
+[手動] 中島裕翔 estimate 15,000（2026-10-10）
+[手動] 河合郁人 estimate 6,000（2026-10-10）
+[手動] timelesz の official を削除（公式発表の出典を確認できないため。報道・推計として扱う）
 [会員番号] フォームの回答を読み込みました（有効な回答 0 件）
-ニュース 594 件 / ファンクラブ 15 グループ → site/data.json
+ニュース 597 件 / ファンクラブ 22 グループ → site/data.json
