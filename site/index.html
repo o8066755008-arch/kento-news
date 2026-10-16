@@ -90,7 +90,7 @@ function spark(points) {
 
 const METRICS = [
   {key: "official", label: "公式発表の会員数", unit: "人", note: "ニュース・Wikipedia から"},
-  {key: "member_no", label: "最新の会員番号（推定）", unit: "番", note: "ファンの投稿から"},
+  {key: "member_no", label: "最新の会員番号（推定）", unit: "番台", note: "ファンの投稿から", masked: true},
   {key: "youtube", label: "YouTube 登録者数", unit: "人", note: "毎日記録", daily: true},
   {key: "spotify", label: "Spotify フォロワー数", unit: "人", note: "毎日記録", daily: true},
 ];
@@ -105,7 +105,7 @@ function metricRow(m, pts) {
   const src = isUrl(last.source) ? `<a href="${esc(last.source)}" target="_blank" rel="noopener">出典</a>` : esc(last.source);
   return `<div class="metric">
     <div class="ml">${m.label}</div>
-    <div><span class="num">${num(last.value)}</span> ${m.unit}
+    <div><span class="num">${m.masked ? num(Math.floor(last.value / 1000)) + ",xxx" : num(last.value)}</span> ${m.unit}
       ${diff !== null && diff !== 0 ? `<span class="diff ${diff > 0 ? "up" : "down"}">${diff > 0 ? "+" : ""}${num(diff)}（${diffLabel}）</span>` : ""}</div>
     ${spark(pts)}
     <div class="meta"><span>${esc(last.date)} 時点</span><span>${src}</span></div>
@@ -118,7 +118,7 @@ function renderFanclub() {
     latest(b[1], "official") - latest(a[1], "official") || latest(b[1], "youtube") - latest(a[1], "youtube"));
   const form = data.fan_form_url ? `<a class="card cta" href="${esc(data.fan_form_url)}" target="_blank" rel="noopener">
       <div class="t">📮 あなたの会員番号を教えてください</div>
-      <div class="o">グループと番号だけを匿名で送れます。集まった番号から最新の会員番号を推定します。</div></a>` : "";
+      <div class="o">下3桁は伏せたまま（例: 1234xxx）、グループと番号だけを匿名で送れます。集まった番号から最新の会員番号を推定します。</div></a>` : "";
   const note = `<p class="note">公式発表はニュース・Wikipedia に載ったときだけ更新されます。会員番号は退会者を含む通し番号のため、今の会員数とは一致しません。</p>`;
   document.getElementById("fanclub").innerHTML = form + (groups.length ? groups.map(([name, g]) => `
     <div class="card fc"><div class="t">${esc(name)}</div>${METRICS.map(m => metricRow(m, g[m.key])).join("")}</div>`).join("") + note

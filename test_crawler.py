@@ -68,6 +68,13 @@ class CrawlerTest(unittest.TestCase):
         rows = self.conn.execute("SELECT date, grp, value FROM metrics ORDER BY grp").fetchall()
         self.assertEqual(rows, [("2024-05-01", "A", 3000000), ("2026-10-17", "B", 500)])
 
+    def test_parse_masked_number(self):
+        self.assertEqual(fanclub.parse_masked_number("1234xxx"), 1234000)
+        self.assertEqual(fanclub.parse_masked_number("1,234,***"), 1234000)
+        self.assertEqual(fanclub.parse_masked_number("1234567"), 1234000)
+        self.assertIsNone(fanclub.parse_masked_number("abc"))
+        self.assertIsNone(fanclub.parse_masked_number("12"))
+
     def test_is_group_channel(self):
         self.assertTrue(fanclub.is_group_channel("timelesz", "timelesz [タイムレス]"))
         self.assertTrue(fanclub.is_group_channel("Hey! Say! JUMP", "Hey! Say! JUMP"))
@@ -77,16 +84,17 @@ class CrawlerTest(unittest.TestCase):
 
     def test_fan_csv_and_estimate_ignores_outliers(self):
         csv_text = ("タイムスタンプ,グループ,会員番号\n"
-                    "2026/10/16 9:00:00,A,\"1,000\"\n"
-                    "2026/10/16 10:00:00,A,1100\n"
-                    "2026/10/16 11:00:00,A,9000\n"   # いたずら（初日の外れ値）
-                    "2026/10/17 9:00:00,A,1200\n"
-                    "2026/10/17 9:30:00,A,5000\n"        # いたずら（前日の1.3倍超）
-                    "2026/10/17 9:40:00,Z,1300\n")       # 一覧にないグループ
+                    "2026/10/16 9:00:00,A,1000xxx\n"
+                    "2026/10/16 10:00:00,A,１１００ｘｘｘ\n"
+                    "2026/10/16 11:00:00,A,9000xxx\n"   # いたずら（初日の外れ値）
+                    "2026/10/17 9:00:00,A,\"1,200,345\"\n"   # 伏せずに書いても千の位で切り捨て
+                    "2026/10/17 9:30:00,A,5000***\n"        # いたずら（前日の1.3倍超）
+                    "2026/10/17 9:35:00,A,わかりません\n"
+                    "2026/10/17 9:40:00,Z,1300xxx\n")       # 一覧にないグループ
         reports = fanclub.parse_fan_csv(csv_text, ["A"])
         self.assertEqual(len(reports), 5)
         est = fanclub.estimate_member_no(reports)["A"]
-        self.assertEqual(est, [("2026-10-16", 1100, 3), ("2026-10-17", 1200, 2)])
+        self.assertEqual(est, [("2026-10-16", 1100000, 3), ("2026-10-17", 1200000, 2)])
 
 if __name__ == "__main__":
     unittest.main()

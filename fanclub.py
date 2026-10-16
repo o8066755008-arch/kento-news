@@ -19,6 +19,7 @@ import json
 import os
 import re
 import sys
+import unicodedata
 import urllib.parse
 import urllib.request
 from datetime import date
@@ -183,6 +184,20 @@ def crawl_wikipedia(conn, groups: list[dict]) -> None:
 
 # ---------------------------------------------------------------- ファンの投稿（会員番号）
 
+def parse_masked_number(text: str) -> int | None:
+    """「1234xxx」のように下3桁を伏せた会員番号を、千の位までの数（1234000）にする。
+
+    下3桁を伏せずに書かれていても、同じく千の位で切り捨てて扱う（番号をそのまま残さないため）。
+    """
+    t = unicodedata.normalize("NFKC", text).strip()  # 全角数字・全角 x を半角に
+    if not re.fullmatch(r"[\d,\s]*\d[\d,\s]*[xX*○●?]{0,3}", t):
+        return None
+    digits = re.sub(r"\D", "", t)
+    masked = len(re.findall(r"[xX*○●?]", t))
+    num = int(digits) * 10 ** masked
+    return num // 1000 * 1000 if num >= 1000 else None
+
+
 def parse_fan_csv(text: str, names: list[str]) -> list[tuple[str, str, int]]:
     """Google フォームの回答 CSV を (日付, グループ, 会員番号) のリストにする。"""
     rows = list(csv.reader(io.StringIO(text)))
@@ -200,11 +215,10 @@ def parse_fan_csv(text: str, names: list[str]) -> list[tuple[str, str, int]]:
     for r in rows[1:]:
         if len(r) <= max(i_time, i_grp, i_num) or r[i_grp] not in names:
             continue
-        digits = re.sub(r"\D", "", r[i_num])
+        num = parse_masked_number(r[i_num])
         m = re.match(r"(\d{4})/(\d{1,2})/(\d{1,2})", r[i_time])
-        if not digits or not m:
+        if num is None or not m:
             continue
-        num = int(digits)
         if 0 < num <= MAX_COUNT:
             out.append((f"{m[1]}-{int(m[2]):02d}-{int(m[3]):02d}", r[i_grp], num))
     return out
