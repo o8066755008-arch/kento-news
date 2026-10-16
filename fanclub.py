@@ -114,7 +114,8 @@ def save_official(conn, items: list[dict], source: str, fallback_day: str) -> in
         day = it["date"] if re.fullmatch(r"\d{4}-\d{2}-\d{2}", it["date"]) else fallback_day
         kind = it.get("kind", "official")
         record(conn, it["group"], kind, it["count"], source, day)
-        print(f"[{'公式' if kind == 'official' else '報道'}] {it['group']} {it['count']:,} 人（{day}）: {it['quote']}")
+        label = {"official": "公式", "press": "報道", "estimate": "推計"}.get(kind, kind)
+        print(f"[{label}] {it['group']} {it['count']:,} 人（{day}）: {it['quote']}")
         saved += 1
     return saved
 
@@ -181,11 +182,20 @@ PAGE_NOTE = (
 )
 
 
-def crawl_pages(conn, groups: list[dict], urls: list[str]) -> None:
+def site_metric(page: dict) -> str:
+    """まとめサイトの数字の記録先。サイトごとに数字の基準がずれるので混ぜない。
+
+    primary のサイトは「estimate」（ランキングに使う定点観測の値）、それ以外は「site:ホスト名」（比較用）。
+    """
+    return "estimate" if page.get("primary") else "site:" + urllib.parse.urlparse(page["url"]).netloc
+
+
+def crawl_pages(conn, groups: list[dict], pages: list[dict]) -> None:
     """groups.json の watch_pages に書いたページを読み、会員数の記述が変わったら取り込む。"""
     import thumbnails
     names = [g["name"] for g in groups]
-    for url in urls:
+    for page in pages:
+        url = page["url"]
         if not thumbnails.allowed(url):
             print(f"[ページ] {url} は robots.txt で禁止されているため読みません")
             continue
@@ -199,17 +209,17 @@ def crawl_pages(conn, groups: list[dict], urls: list[str]) -> None:
         if not snippet:
             print(f"[ページ] {url} に会員数の記述が見つかりません")
             continue
-        if get_state(conn, "page:" + url) == digest:
+        if get_state(conn, "page2:" + url) == digest:
             print(f"[ページ] {url} は前回から変化がありません")
             continue
         result = translate.ask_json(EXTRACT_SYSTEM + PAGE_NOTE, snippet[:20000], extract_schema(names))
         if result is None:
             continue
         for it in result["items"]:
-            it["kind"] = "press"  # まとめサイトの数字は公式扱いにしない
+            it["kind"] = site_metric(page)  # まとめサイトの数字は公式扱いにしない
         n = save_official(conn, result["items"], url, date.today().isoformat())
         print(f"[ページ] {url} から {n} 件を記録しました")
-        set_state(conn, "page:" + url, digest)
+        set_state(conn, "page2:" + url, digest)
 
 
 def crawl_wikipedia(conn, groups: list[dict]) -> None:

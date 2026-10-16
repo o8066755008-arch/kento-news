@@ -45,6 +45,10 @@ main{max-width:720px;margin:0 auto;padding:12px 16px calc(24px + env(safe-area-i
 .fc .diff{font-size:.85rem;margin-left:6px}
 .fc .meta a{color:var(--accent)}
 .cta{border-color:var(--accent)}
+.others{margin-top:10px;font-size:.82rem;color:var(--sub)}
+.others summary{color:var(--accent);font-weight:600;cursor:pointer}
+.others ul{margin:6px 0 0;padding-left:1.2em;line-height:1.8}
+.others a{color:var(--accent)}
 .note{color:var(--sub);font-size:.78rem;line-height:1.6}
 h2.sec{font-size:1rem;margin:18px 0 6px}
 h3.region{font-size:.9rem;color:var(--sub);margin:14px 0 0}
@@ -226,7 +230,8 @@ function spark(points) {
 
 const METRICS = [
   {key: "official", label: "公式発表の会員数", unit: "人", note: "ニュース・Wikipedia から"},
-  {key: "press", label: "報道・まとめサイトの会員数（推定）", unit: "人", note: "ニュース・Wikipedia から"},
+  {key: "estimate", label: "推計値（定点観測サイト）", unit: "人", note: ""},
+  {key: "press", label: "報道での推定会員数", unit: "人", note: "ニュース・Wikipedia から"},
   {key: "member_no", label: "最新の会員番号（推定）", unit: "番台", note: "ファンの投稿から", masked: true},
   {key: "youtube", label: "YouTube 登録者数", unit: "人", note: "毎日記録", daily: true},
   {key: "spotify", label: "Spotify フォロワー数", unit: "人", note: "毎日記録", daily: true},
@@ -250,10 +255,21 @@ function metricRow(m, pts) {
 }
 
 let rankBy = "fc";
-// FC 会員数は公式発表を優先し、なければ報道での推定を使う
+// FC 会員数は公式発表を優先し、なければ定点観測サイトの推計値、それもなければ報道での推定を使う
 const fcLatest = g => (g.official || []).at(-1) ? {...g.official.at(-1), press: false}
+  : (g.estimate || []).at(-1) ? {...g.estimate.at(-1), press: true}
   : (g.press || []).at(-1) ? {...g.press.at(-1), press: true} : null;
 const ytLatest = g => (g.youtube || []).at(-1) || null;
+
+// 比較用サイトの数字（基準がサイトごとに違うので、ランキングには使わず並べて見せるだけ）
+function otherSites(g) {
+  const rows = Object.entries(g).filter(([k]) => k.startsWith("site:")).map(([k, pts]) => {
+    const last = pts.at(-1);
+    return `<li>${esc(k.slice(5))}：<b>${num(last.value)} 人</b>（${esc(last.date)}）
+      ${isUrl(last.source) ? `<a href="${esc(last.source)}" target="_blank" rel="noopener">出典</a>` : ""}</li>`;
+  });
+  return rows.length ? `<details class="others"><summary>ほかのサイトの推計（${rows.length}）</summary><ul>${rows.join("")}</ul></details>` : "";
+}
 
 function renderRanking() {
   const pick = rankBy === "fc" ? fcLatest : ytLatest;
@@ -268,7 +284,7 @@ function renderRanking() {
     <div class="seg"><button data-rank="fc" class="${rankBy === "fc" ? "on" : ""}">FC会員数</button>
       <button data-rank="yt" class="${rankBy === "yt" ? "on" : ""}">YouTube登録者</button></div>
     ${bars || `<div class="note">まだデータがありません</div>`}
-    ${rankBy === "fc" ? `<p class="note">公式発表・報道に数字が出たグループだけが並びます。「推定」は報道やまとめサイトに載った数字で、公式発表ではありません。</p>` : ""}</div>`;
+    ${rankBy === "fc" ? `<p class="note">公式発表・報道に数字が出たグループだけが並びます。会員数は公式には公表されていないため、多くは「推定」です。サイトごとに数字がずれるので、ランキングは1つのサイト（snowman-information.com）の推計値で比べています。</p>` : ""}</div>`;
 }
 
 function renderFanclub() {
@@ -280,7 +296,7 @@ function renderFanclub() {
       <div class="o">下3桁は伏せたまま（例: 1234xxx）、グループと番号だけを匿名で送れます。集まった番号から最新の会員番号を推定します。</div></a>` : "";
   const note = `<p class="note">公式発表はニュース・Wikipedia に載ったときだけ更新されます。会員番号は退会者を含む通し番号のため、今の会員数とは一致しません。</p>`;
   document.getElementById("fanclub").innerHTML = renderRanking() + form + (groups.length ? groups.map(([name, g]) => `
-    <div class="card fc"><div class="t">${esc(name)}</div>${METRICS.map(m => metricRow(m, g[m.key])).join("")}</div>`).join("") + note
+    <div class="card fc"><div class="t">${esc(name)}</div>${METRICS.map(m => metricRow(m, g[m.key])).join("")}${otherSites(g)}</div>`).join("") + note
     : `<div class="empty">まだデータがありません<br>毎日の記録が始まると、ここに推移が表示されます</div>`);
 }
 

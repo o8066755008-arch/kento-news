@@ -2,7 +2,23 @@
   "fan_form_url": "https://forms.gle/n3co5Qmg4j5Ebv7Y8",
   "fan_form_csv_url": "https://docs.google.com/spreadsheets/d/1gFxL2t1PqH_9gFx0bqVlxn3UrpatZ62MEnOxxO9sR8o/export?format=csv",
   "watch_pages": [
-    "https://snowman-information.com/johnnys-fc/"
+    {
+      "url": "https://snowman-information.com/johnnys-fc/",
+      "primary": true,
+      "note": "月次更新の一覧。ランキングはこのサイトの数字で定点観測する"
+    },
+    {
+      "url": "https://report-newage.com/18785",
+      "note": "比較用"
+    },
+    {
+      "url": "https://ticketcircle.jp/media/live/539",
+      "note": "比較用"
+    },
+    {
+      "url": "https://ticketcircle.jp/media/live/551",
+      "note": "比較用（SixTONES の推移）"
+    }
   ],
   "groups": [
     {
@@ -80,6 +96,26 @@
     {
       "name": "中島健人",
       "wikipedia": "中島健人",
+      "youtube_channel_id": "",
+      "spotify_artist_id": "",
+      "solo": true
+    },
+    {
+      "name": "嵐",
+      "wikipedia": "嵐",
+      "youtube_channel_id": "",
+      "spotify_artist_id": ""
+    },
+    {
+      "name": "櫻井翔",
+      "wikipedia": "櫻井翔",
+      "youtube_channel_id": "",
+      "spotify_artist_id": "",
+      "solo": true
+    },
+    {
+      "name": "相葉雅紀",
+      "wikipedia": "相葉雅紀",
       "youtube_channel_id": "",
       "spotify_artist_id": "",
       "solo": true
