@@ -1,4 +1,3 @@
-[Bing th-TH] 取得に失敗しました: not well-formed (invalid token): line 1, column 41 / 先頭: b'<!DOCTYPE html><html xml:lang="en" xmlns=http://www.w3.org/1999/xhtml xmlns:Web=http://schemas.live.com/Web><head><meta '
 重複の整理 0 件
 [Google JP] 取得 100 件 / 新規 0 件
 [Google KR] 取得 60 件 / 新規 0 件
@@ -7,39 +6,39 @@
 [Google PH] 取得 100 件 / 新規 0 件
 [Google TW] 取得 100 件 / 新規 0 件
 [Google HK] 取得 100 件 / 新規 0 件
-[Google TH] 取得 35 件 / 新規 1 件
+[Google TH] 取得 35 件 / 新規 0 件
 [Google VN] 取得 9 件 / 新規 0 件
 [Google ID] 取得 51 件 / 新規 0 件
-[Google MX] 取得 29 件 / 新規 0 件
+[Google MX] 取得 30 件 / 新規 0 件
 [Google BR] 取得 22 件 / 新規 0 件
 [Google FR] 取得 14 件 / 新規 0 件
-[Bing ja-JP] 取得 12 件 / 新規 1 件
+[Bing ja-JP] 取得 12 件 / 新規 0 件
 [Bing ko-KR] 取得 10 件 / 新規 0 件
 [Bing en-US] 取得 9 件 / 新規 0 件
 [Bing zh-TW] 取得 12 件 / 新規 0 件
-翻訳 1 件
-[サムネイル] 80 件を確認 / 画像あり 1 件
+[Bing th-TH] 取得 11 件 / 新規 0 件
+翻訳 0 件
+[サムネイル] 80 件を確認 / 画像あり 0 件
 [トピックス] 記事に変化がないため前回のまとめを使います
-[ニュース] 会員数の新しい記事はありません
 [Wikipedia] 会員数の記述に変化はありません
 [YouTube] A.B.C-Z の公式チャンネルが見つかりません。groups.json に ID を書いてください
 [YouTube] 20th Century の公式チャンネルが見つかりません。groups.json に ID を書いてください
-[YouTube] 木村拓哉 2,420,000 人（木村拓哉）
-[YouTube] SixTONES 2,730,000 人（SixTONES）
-[YouTube] Kis-My-Ft2 863,000 人（Kis-My-Ft2）
-[YouTube] Aぇ! group 653,000 人（Aぇ! group）
-[YouTube] King & Prince 1,880,000 人（King & Prince）
-[YouTube] 嵐 3,880,000 人（ARASHI）
-[YouTube] timelesz 1,230,000 人（timelesz [タイムレス]）
-[YouTube] NEWS 293,000 人（にゅうちゅうぶ | NEWS official）
-[YouTube] Snow Man 4,440,000 人（Snow Man）
 [YouTube] Travis Japan 677,000 人（Travis Japan）
+[YouTube] Snow Man 4,440,000 人（Snow Man）
 [YouTube] なにわ男子 1,900,000 人（なにわ男子）
+[YouTube] NEWS 293,000 人（にゅうちゅうぶ | NEWS official）
+[YouTube] 嵐 3,880,000 人（ARASHI）
 [YouTube] WEST. 916,000 人（WEST.）
+[YouTube] Aぇ! group 653,000 人（Aぇ! group）
+[YouTube] timelesz 1,230,000 人（timelesz [タイムレス]）
 [YouTube] 中島健人 258,000 人（中島健人 Official YouTube Channel）
+[YouTube] 木村拓哉 2,420,000 人（木村拓哉）
+[YouTube] Kis-My-Ft2 863,000 人（Kis-My-Ft2）
+[YouTube] SixTONES 2,730,000 人（SixTONES）
 [YouTube] Hey! Say! JUMP 896,000 人（Hey! Say! JUMP）
+[YouTube] King & Prince 1,880,000 人（King & Prince）
 [Spotify] SPOTIFY_CLIENT_ID / SPOTIFY_CLIENT_SECRET が未設定です
-[ページ] https://snowman-information.com/johnnys-fc/: 本文 2344 文字 / 会員数らしい部分 958 文字
+[ページ] https://snowman-information.com/johnnys-fc/: 本文 2333 文字 / 会員数らしい部分 1444 文字
 [推計] Snow Man 1,942,000 人（2026-10-10）: Snow Man 1,942,000
 [推計] King & Prince 1,160,000 人（2026-10-10）: King & Prince 1,160,000
 [推計] SixTONES 1,130,000 人（2026-10-10）: SixTONES 1,130,000
@@ -88,4 +87,5 @@
 [会員番号] フォームの回答を読み込みました（有効な回答 0 件）
 ニュース 599 件 / ファンクラブ 22 グループ → site/data.json
 [通知] 知らせる変化はありません
+[通知] 送りました
 [通知] 送りました
