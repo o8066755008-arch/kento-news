@@ -46,7 +46,7 @@ SOURCES = [
 BING_SOURCES = [
     ("ja", "中島健人", "ja-JP"),
     ("ko", "나카지마 켄토", "ko-KR"),
-    ("en", EN_QUERY, "en-US"),
+    ("en", "Kento Nakajima", "en-US"),  # Bing は OR と引用符の組み合わせで0件になるため
     ("zh", "中島健人", "zh-TW"),
     ("th", "Kento Nakajima", "th-TH"),
 ]
@@ -115,9 +115,28 @@ def parse_bing_rss(xml_bytes: bytes, lang: str) -> list[dict]:
     return items
 
 
+TRUNCATED = re.compile(r"\s*(\.\.\.|…)\s*$")
+
+
 def title_key(title: str) -> str:
-    """同じ記事が Google と Bing の両方から来たときに見分けるための見出しの正規化。"""
-    return re.sub(r"[\s\W_]+", "", title).lower()[:60]
+    """同じ記事が Google と Bing の両方から来たときに見分けるための見出しの正規化。
+
+    Bing は長い見出しを「…」で省略するので、省略記号は外しておき、前方一致で比べる。
+    """
+    return re.sub(r"[\s\W_]+", "", TRUNCATED.sub("", title)).lower()[:60]
+
+
+MIN_PREFIX = 15  # これより短い見出しは前方一致では同じ記事とみなさない
+
+
+def find_same(conn, link: str, key: str):
+    """同じ記事（リンクが同じ、または見出しが同じ・片方が省略された見出し）を探す。"""
+    return conn.execute(
+        "SELECT link, image FROM articles WHERE link = ? OR title_key = ? "
+        "OR (length(?) >= ? AND title_key LIKE ? || '%') "
+        "OR (length(title_key) >= ? AND ? LIKE title_key || '%') LIMIT 1",
+        (link, key, key, MIN_PREFIX, key, MIN_PREFIX, key),
+    ).fetchone()
 
 
 def open_db(path: Path = DB_PATH) -> sqlite3.Connection:
@@ -137,7 +156,8 @@ def open_db(path: Path = DB_PATH) -> sqlite3.Connection:
     for col, decl in [("image", "TEXT"), ("title_key", "TEXT"), ("image_tried", "INTEGER DEFAULT 0")]:
         if col not in cols:
             conn.execute(f"ALTER TABLE articles ADD COLUMN {col} {decl}")
-    missing = conn.execute("SELECT link, title FROM articles WHERE title_key IS NULL").fetchall()
+    missing = conn.execute("SELECT link, title FROM articles WHERE title_key IS NULL "
+                           "OR title LIKE '%...' OR title LIKE '%…'").fetchall()
     conn.executemany("UPDATE articles SET title_key = ? WHERE link = ?",
                      [(title_key(t), link) for link, t in missing])
     # 会員数まわりの数値。metric は official（公式発表）/ member_no（ファン投稿の会員番号）
@@ -163,8 +183,7 @@ def save(conn: sqlite3.Connection, items: list[dict]) -> int:
     added = 0
     for it in items:
         key = title_key(it["title"])
-        row = conn.execute("SELECT link, image FROM articles WHERE link = ? OR title_key = ?",
-                           (it["link"], key)).fetchone()
+        row = find_same(conn, it["link"], key)
         if row:
             if it.get("image") and not row[1]:
                 conn.execute("UPDATE articles SET image = ? WHERE link = ?", (it["image"], row[0]))
@@ -201,8 +220,28 @@ def translate_pending(conn: sqlite3.Connection, batch: int = 80, limit: int = 40
     return done
 
 
+def remove_duplicates(conn) -> int:
+    """以前の版で二重に保存した記事（省略された見出し）を消す。画像は残る方に移す。"""
+    removed = 0
+    rows = conn.execute("SELECT link, title_key, image FROM articles ORDER BY length(title_key) DESC").fetchall()
+    for link, key, image in rows:
+        if not key or len(key) < MIN_PREFIX:
+            continue
+        other = conn.execute(
+            "SELECT link, image FROM articles WHERE link != ? AND title_key LIKE ? || '%' "
+            "AND length(title_key) > length(?) LIMIT 1", (link, key, key)).fetchone()
+        if other:
+            if image and not other[1]:
+                conn.execute("UPDATE articles SET image = ? WHERE link = ?", (image, other[0]))
+            conn.execute("DELETE FROM articles WHERE link = ?", (link,))
+            removed += 1
+    conn.commit()
+    return removed
+
+
 def main() -> int:
     conn = open_db()
+    print(f"重複の整理 {remove_duplicates(conn)} 件")
     total = 0
     feeds = [(lang, f"Google {gl}", feed_url(q, hl, gl, ceid), parse_rss)
              for lang, q, hl, gl, ceid in SOURCES]

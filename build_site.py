@@ -8,7 +8,7 @@ from crawler import open_db
 SITE_DIR = Path(__file__).resolve().parent / "site"
 
 
-def build(conn, out: Path = SITE_DIR / "data.json", limit: int = 300) -> dict:
+def build(conn, out: Path = SITE_DIR / "data.json", limit: int = 800) -> dict:
     news = [
         {"title": title_ja or title, "original": title if lang != "ja" else None,
          "translated": bool(title_ja), "lang": lang, "source": source,

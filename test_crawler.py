@@ -112,6 +112,21 @@ class CrawlerTest(unittest.TestCase):
         rows = self.conn.execute("SELECT link, image FROM articles").fetchall()
         self.assertEqual(rows, [("https://example.com/a", "https://www.bing.com/th?id=OVFT.abc&pid=News")])
 
+    def test_truncated_headline_is_same_article(self):
+        full = [{"title": "중島健人「人集まらなかったらどうしよう」アジアツアーの舞台裏で見せた不安と葛藤",
+                 "link": "https://g/1", "source": "s", "published": "2026-10-15", "lang": "ja",
+                 "title_ja": "x", "image": None}]
+        cut = [dict(full[0], title="중島健人「人集まらなかったらどうしよう」アジアツアーの舞台 ...",
+                    link="https://b/1", image="https://img/1")]
+        self.assertEqual(crawler.save(self.conn, full), 1)
+        self.assertEqual(crawler.save(self.conn, cut), 0)
+        self.assertEqual(self.conn.execute("SELECT image FROM articles").fetchall(), [("https://img/1",)])
+        # 以前の版で二重に入ったものは整理で消える
+        self.conn.execute("INSERT INTO articles (link, title, lang, title_key) VALUES (?, ?, 'ja', ?)",
+                          ("https://b/2", cut[0]["title"], crawler.title_key(cut[0]["title"])))
+        self.assertEqual(crawler.remove_duplicates(self.conn), 1)
+        self.assertEqual(self.conn.execute("SELECT link FROM articles").fetchall(), [("https://g/1",)])
+
     def test_find_image(self):
         page = '<head><meta content="/img/a.jpg?x=1&amp;y=2" property="og:image"></head>'
         self.assertEqual(thumbnails.find_image(page, "https://site.example/news/1"),

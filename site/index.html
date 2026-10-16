@@ -30,6 +30,9 @@ main{max-width:720px;margin:0 auto;padding:12px 16px calc(24px + env(safe-area-i
 .card{position:relative}
 .card.news{display:flow-root}
 .card .thumb{float:right;width:96px;height:96px;object-fit:cover;border-radius:10px;margin:0 0 6px 12px;background:var(--line)}
+.card .thumb.ph{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:linear-gradient(135deg,var(--chip),var(--card));border:1px solid var(--line)}
+.card .thumb.ph span{font-size:1.9rem}
+.card .thumb.ph small{color:var(--sub);font-size:.62rem;max-width:88px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 .topic .hero{display:block;width:calc(100% + 28px);margin:-14px -14px 12px;aspect-ratio:5/2;object-fit:cover;border-radius:14px 14px 0 0;background:var(--line)}
 .meta a.orig{position:relative;z-index:1;color:var(--accent);margin-left:auto}
 .card .o{color:var(--sub);font-size:.8rem;margin-top:6px;line-height:1.4}
@@ -82,6 +85,11 @@ const LANG = {all: "すべて", ja: "日本", ko: "韓国", zh: "台湾・香港
 const FLAG = {ja: "🇯🇵", ko: "🇰🇷", zh: "🇹🇼", th: "🇹🇭", vi: "🇻🇳", id: "🇮🇩", en: "🌐", es: "🇲🇽", pt: "🇧🇷", fr: "🇫🇷"};
 // 画像が読み込めないときは枠ごと消す
 const thumb = (url, cls) => url ? `<img class="${cls}" src="${esc(url)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : "";
+const placeholder = n => `<div class="thumb ph" aria-hidden="true"><span>${FLAG[n.lang] || "📰"}</span><small>${esc((n.source || "").slice(0, 8))}</small></div>`;
+// 一覧のサムネイルは、読み込めなかったときに国旗の枠に差し替える
+const listThumb = n => n.image
+  ? `<img class="thumb" src="${esc(n.image)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.outerHTML=this.dataset.ph" data-ph="${esc(placeholder(n))}">`
+  : placeholder(n);
 let data = {news: [], fanclub: {}}, filter = "all";
 
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -120,7 +128,7 @@ function renderNews() {
   const items = data.news.filter(n => filter === "all" || n.lang === filter);
   document.getElementById("list").innerHTML = items.length ? items.map(n => `
     <div class="card news">
-      ${thumb(n.image, "thumb")}
+      ${listThumb(n)}
       <a class="cover" href="${esc(openUrl(n))}" target="_blank" rel="noopener"><div class="t">${esc(n.title)}</div></a>
       ${n.original ? `<div class="o">${n.translated ? "原文: " : "（翻訳待ち）"}${esc(n.original)}</div>` : ""}
       <div class="meta">${n.lang !== "ja" ? `<span class="chip">${FLAG[n.lang] || ""} ${LANG[n.lang] || n.lang}</span>` : ""}
