@@ -26,6 +26,13 @@ BING = """<?xml version="1.0"?><rss xmlns:News="https://www.bing.com/news/search
 </channel></rss>""".encode()
 
 
+def notify_parse(text):
+    """form_subscriptions の CSV の読み方だけを、通信なしで試す。"""
+    with mock.patch("urllib.request.urlopen") as op:
+        op.return_value.__enter__.return_value.read.return_value = text.encode()
+        return notify.form_subscriptions("https://x")
+
+
 class CrawlerTest(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
@@ -200,6 +207,23 @@ class CrawlerTest(unittest.TestCase):
                 "fc_rank": None, "yt_rank": None}
         cur = dict(prev, events=["a|11/3 ライブ", "b|12/1 ファンミ"])
         self.assertEqual(notify.changes(prev, cur, {}), ["🎤 12/1 ファンミ"])
+
+    def test_subscriptions_from_secret_and_form_without_duplicates_or_dead(self):
+        a = {"endpoint": "https://fcm.googleapis.com/a", "keys": {"p256dh": "x", "auth": "y"}}
+        b = {"endpoint": "https://web.push.apple.com/b", "keys": {"p256dh": "x", "auth": "y"}}
+        c = {"endpoint": "https://fcm.googleapis.com/c", "keys": {"p256dh": "x", "auth": "y"}}
+        import csv, io
+        buf = io.StringIO()
+        w = csv.writer(buf)
+        w.writerow(["タイムスタンプ", "宛先"])
+        for row in (["2026/10/17 9:00:00", json.dumps(a)], ["2026/10/17 9:01:00", json.dumps(b)],
+                    ["2026/10/17 9:02:00", "いたずら"], ["2026/10/17 9:03:00", json.dumps(c)]):
+            w.writerow(row)
+        self.conn.execute("INSERT INTO watch_state VALUES ('push_dead', ?)", (json.dumps([c["endpoint"]]),))
+        with mock.patch.dict("os.environ", {"PUSH_SUBSCRIPTIONS": json.dumps([a])}), \
+             mock.patch("notify.form_subscriptions", return_value=notify_parse(buf.getvalue())):
+            subs = notify.all_subscriptions(self.conn, {"notify": {"subscribe_csv_url": "https://x"}})
+        self.assertEqual([x["endpoint"] for x in subs], [a["endpoint"], b["endpoint"]])
 
     def test_find_image(self):
         page = '<head><meta content="/img/a.jpg?x=1&amp;y=2" property="og:image"></head>'

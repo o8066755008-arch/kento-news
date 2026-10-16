@@ -10,7 +10,8 @@
 
 必要な環境変数（GitHub の Secrets）:
   VAPID_PRIVATE_KEY   : 通知に署名する鍵
-  PUSH_SUBSCRIPTIONS  : アプリの「通知をオンにする」で表示された文字列（複数の端末なら JSON の配列）
+  PUSH_SUBSCRIPTIONS  : （任意）手で登録した宛先。JSON の配列
+宛先は groups.json の notify.subscribe_csv_url（アプリから自動登録される Google フォームの回答）からも読む。
 """
 import json
 import os
@@ -111,34 +112,90 @@ def changes(prev: dict, cur: dict, rules: dict) -> list[str]:
     return lines
 
 
-def send(title: str, body: str) -> None:
-    key, subs = os.environ.get("VAPID_PRIVATE_KEY"), os.environ.get("PUSH_SUBSCRIPTIONS")
-    if not (key and subs):
-        print("[通知] VAPID_PRIVATE_KEY / PUSH_SUBSCRIPTIONS が未設定のため送りません")
+def form_subscriptions(csv_url: str) -> list[dict]:
+    """アプリの「通知をオンにする」で Google フォームに自動登録された宛先を読む。"""
+    import csv
+    import io
+    import urllib.request
+    try:
+        req = urllib.request.Request(csv_url, headers={"User-Agent": "kento-news"})
+        with urllib.request.urlopen(req, timeout=20) as res:
+            text = res.read().decode("utf-8-sig")
+    except Exception as e:
+        print(f"[通知] 登録フォームの読み込みに失敗しました: {e}", flush=True)
+        return []
+    subs = []
+    for row in csv.reader(io.StringIO(text)):
+        for cell in row:
+            try:
+                sub = json.loads(cell)
+            except ValueError:
+                continue  # 見出しの行やタイムスタンプ、壊れた登録は飛ばす
+            if isinstance(sub, dict) and str(sub.get("endpoint", "")).startswith("https://") and "keys" in sub:
+                subs.append(sub)
+    return subs
+
+
+def all_subscriptions(conn, config: dict) -> list[dict]:
+    """Secrets の宛先とフォームの宛先をまとめ、同じ端末の重複と、使えなくなった宛先を除く。"""
+    subs = []
+    env = os.environ.get("PUSH_SUBSCRIPTIONS")
+    if env:
+        loaded = json.loads(env)
+        subs += loaded if isinstance(loaded, list) else [loaded]
+    csv_url = config.get("notify", {}).get("subscribe_csv_url")
+    if csv_url:
+        subs += form_subscriptions(csv_url)
+    dead = set(json.loads(get_state(conn, "push_dead") or "[]"))
+    seen, out = set(), []
+    for sub in subs:
+        ep = sub["endpoint"]
+        if ep not in seen and ep not in dead:
+            seen.add(ep)
+            out.append(sub)
+    return out
+
+
+def get_state(conn, key):
+    row = conn.execute("SELECT value FROM watch_state WHERE key = ?", (key,)).fetchone()
+    return row[0] if row else None
+
+
+def send(conn, config: dict, title: str, body: str) -> None:
+    key = os.environ.get("VAPID_PRIVATE_KEY")
+    targets = all_subscriptions(conn, config)
+    if not (key and targets):
+        print("[通知] 鍵または宛先がないため送りません", flush=True)
         return
     from pywebpush import WebPushException, webpush
 
-    targets = json.loads(subs)
-    for sub in targets if isinstance(targets, list) else [targets]:
+    dead = set(json.loads(get_state(conn, "push_dead") or "[]"))
+    sent = 0
+    for sub in targets:
         host = sub.get("endpoint", "")
         device = "iPhone/iPad" if "apple.com" in host else "Android" if "googleapis.com" in host else host[:30]
         try:
             webpush(sub, json.dumps({"title": title, "body": body, "url": APP_URL}, ensure_ascii=False),
                     vapid_private_key=key, vapid_claims={"sub": CONTACT})
-            print(f"[通知] {device} に送りました", flush=True)
+            sent += 1
         except WebPushException as e:
             status = getattr(e.response, "status_code", None)
-            hint = "（通知の登録が切れています。アプリでもう一度オンにしてください）" if status in (404, 410) else ""
-            print(f"[通知] {device} に送れませんでした: {status} {hint}", flush=True)
+            if status in (404, 410):
+                dead.add(host)  # アプリを入れ直したなどで使えなくなった宛先。次からは送らない
+            print(f"[通知] {device} に送れませんでした: {status}", flush=True)
+    conn.execute("INSERT INTO watch_state (key, value) VALUES ('push_dead', ?) "
+                 "ON CONFLICT(key) DO UPDATE SET value = excluded.value", (json.dumps(sorted(dead)),))
+    conn.commit()
+    print(f"[通知] {sent} / {len(targets)} 台に送りました", flush=True)
 
 
 def main() -> int:
-    if "--test" in sys.argv:
-        send(f"{NAME} ニュース", "🔔 テスト通知です。通知の設定ができました！")
-        return 0
     config = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
-    rules = config.get("notify", {})
     conn = open_db()
+    if "--test" in sys.argv:
+        send(conn, config, f"{NAME} ニュース", "🔔 テスト通知です。通知の設定ができました！")
+        return 0
+    rules = config.get("notify", {})
     cur = current_state(conn, config["groups"])
     row = conn.execute("SELECT value FROM watch_state WHERE key = 'notify_state'").fetchone()
     if row is None:
@@ -149,7 +206,7 @@ def main() -> int:
         if lines:
             body = "\n".join(lines[:max_lines]) + (f"\nほか {len(lines) - max_lines} 件" if len(lines) > max_lines else "")
             print(f"[通知] {len(lines)} 件の変化:\n{body}")
-            send(f"{NAME} の新着", body)
+            send(conn, config, f"{NAME} の新着", body)
         else:
             print("[通知] 知らせる変化はありません")
     conn.execute("INSERT INTO watch_state (key, value) VALUES ('notify_state', ?) "

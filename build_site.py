@@ -47,6 +47,7 @@ def build(conn, out: Path = SITE_DIR / "data.json", limit: int = 800) -> dict:
     data = {"updated": time.strftime("%Y-%m-%d %H:%M"), "news": news, "digest": digest, "fanclub": fanclub,
             "groups_meta": groups_meta, "events": events,
             "vapid_public_key": config.get("notify", {}).get("vapid_public_key", ""),
+            "subscribe_form": config.get("notify", {}).get("subscribe_form"),
             "fan_form_url": config.get("fan_form_url", "")}
     out.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
     return data

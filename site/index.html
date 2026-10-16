@@ -252,6 +252,20 @@ const b64ToBytes = b64 => {
   return Uint8Array.from(s, c => c.charCodeAt(0));
 };
 
+// 宛先を Google フォームに送って自動登録する（同じ宛先は1回だけ）
+async function registerSub(sub) {
+  const f = data.subscribe_form;
+  if (!f || !f.action || !sub) return false;
+  let sent = null;
+  try { sent = localStorage.getItem("push_registered"); } catch (_) {}
+  if (sent === sub.endpoint) return true;
+  try {
+    await fetch(f.action, {method: "POST", mode: "no-cors", body: new URLSearchParams({[f.entry]: JSON.stringify(sub)})});
+    try { localStorage.setItem("push_registered", sub.endpoint); } catch (_) {}
+    return true;
+  } catch (_) { return false; }
+}
+
 async function renderPush(subText) {
   const el = document.getElementById("push");
   if (!el) return;
@@ -264,8 +278,10 @@ async function renderPush(subText) {
   let sub = null;
   try { sub = await (await navigator.serviceWorker.ready).pushManager.getSubscription(); } catch (_) {}
   if (sub && subText === undefined) {
-    el.innerHTML = head + `<div class="sub">通知はオンです。新しい話題・イベントや、登録者・会員数の区切りをお知らせします。</div>
-      <button class="pbtn ghost" data-push="show">登録用の文字列をもう一度表示</button>`;
+    // 宛先が変わっていたら（アプリの入れ直しなど）自動で登録し直す
+    const auto = await registerSub(sub);
+    el.innerHTML = head + `<div class="sub">通知はオンです ✓ 新しい話題・イベントや、登録者・会員数の区切りをお知らせします。</div>
+      ${auto ? "" : `<button class="pbtn ghost" data-push="show">登録用の文字列をもう一度表示</button>`}`;
     return;
   }
   if (subText) {
@@ -289,7 +305,11 @@ async function turnOnPush() {
     const reg = await navigator.serviceWorker.ready;
     const sub = (await reg.pushManager.getSubscription()) ||
       await reg.pushManager.subscribe({userVisibleOnly: true, applicationServerKey: b64ToBytes(data.vapid_public_key)});
-    renderPush(JSON.stringify(sub));
+    if (await registerSub(sub.toJSON())) {
+      el.innerHTML = `<div class="lb">🔔 通知</div><div class="sub">通知をオンにしました ✓ 次の更新（3時間おき）から届きます。</div>`;
+    } else {
+      renderPush(JSON.stringify(sub));  // 自動登録の設定がないときは、手で登録してもらう
+    }
   } catch (e) {
     el.querySelector(".sub").textContent = "通知をオンにできませんでした: " + e.message;
   }
