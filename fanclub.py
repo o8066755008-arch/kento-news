@@ -379,8 +379,26 @@ def crawl_youtube(conn, groups: list[dict]) -> None:
         return
     api = "https://www.googleapis.com/youtube/v3"
     ids = {}
+    confirmed = set()  # groups.json で人が確かめて指定したチャンネル（名前の照合をしない）
     for g in groups:
-        cid = g.get("youtube_channel_id") or get_state(conn, "yt:" + g["name"])
+        if g.get("youtube") == "none":
+            continue  # 単独の公式チャンネルがないと確認済み
+        cid = g.get("youtube_channel_id")
+        if not cid and g.get("youtube_handle"):
+            q = urllib.parse.urlencode({"part": "id", "forHandle": g["youtube_handle"], "key": key})
+            try:
+                found = get_json(f"{api}/channels?{q}").get("items", [])
+            except Exception as e:
+                print(f"[YouTube] {g['name']} のハンドル {g['youtube_handle']} の確認に失敗しました: {e}", file=sys.stderr)
+                continue
+            if not found:
+                print(f"[YouTube] {g['name']} のハンドル {g['youtube_handle']} が見つかりません")
+                continue
+            cid = found[0]["id"]
+        if cid:
+            confirmed.add(cid)
+        else:
+            cid = get_state(conn, "yt:" + g["name"])
         if not cid:
             # 初回だけ検索してチャンネルを決める（結果は last_run.log で確認できる）
             q = urllib.parse.urlencode({"part": "snippet", "type": "channel", "maxResults": 10,
@@ -408,7 +426,7 @@ def crawl_youtube(conn, groups: list[dict]) -> None:
         return
     for it in items:
         name = ids[it["id"]]
-        if not is_group_channel(name, it["snippet"]["title"]):
+        if it["id"] not in confirmed and not is_group_channel(name, it["snippet"]["title"]):
             # 以前の検索で別のチャンネルを選んでいた場合は選び直す
             print(f"[YouTube] {name}: 「{it['snippet']['title']}」は別のチャンネルのため選び直します")
             conn.execute("DELETE FROM watch_state WHERE key = ?", ("yt:" + name,))
@@ -465,6 +483,18 @@ def crawl_spotify(conn, groups: list[dict]) -> None:
             print(f"[Spotify] {g['name']} {int(followers):,} 人")
 
 
+MANUAL_PATH = Path(__file__).resolve().parent / "manual_metrics.json"
+
+
+def load_manual(conn) -> None:
+    """manual_metrics.json に人が書いた数字（出典つき）を毎回取り込む。"""
+    if not MANUAL_PATH.exists():
+        return
+    for m in json.loads(MANUAL_PATH.read_text(encoding="utf-8"))["entries"]:
+        record(conn, m["group"], m["metric"], int(m["value"]), m["source"], m["date"])
+        print(f"[手動] {m['group']} {m['metric']} {int(m['value']):,}（{m['date']}）")
+
+
 def main() -> int:
     conn = open_db()
     if len(sys.argv) == 4 and sys.argv[1] == "add":
@@ -476,6 +506,7 @@ def main() -> int:
     for step in (crawl_news, crawl_wikipedia, crawl_youtube, crawl_spotify):
         step(conn, groups)
     crawl_pages(conn, groups, config.get("watch_pages", []))
+    load_manual(conn)
     crawl_fan_reports(conn, config)
     return 0
 

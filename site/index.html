@@ -91,6 +91,18 @@ svg.spark{width:100%;height:46px;margin-top:6px}
 .dots{display:flex;justify-content:center;gap:6px;margin:2px 0 6px}
 .dots i{width:6px;height:6px;border-radius:50%;background:var(--line)}
 .dots i.on{background:var(--accent)}
+/* ダッシュボード */
+.dash{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:6px 0 4px}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;min-width:0}
+.tile.wide{grid-column:1 / -1}
+.tile .lb{color:var(--sub);font-size:.75rem;font-weight:600}
+.tile .vv{font-size:1.5rem;font-weight:800;line-height:1.2;margin-top:4px;white-space:nowrap}
+.tile .vv small{font-size:.8rem;font-weight:600;margin-left:2px}
+.tile .sub{color:var(--sub);font-size:.72rem;line-height:1.5;margin-top:4px}
+.tile .sub b{color:var(--text)}
+.tile .rk{display:inline-block;background:var(--chip);color:var(--accent);border-radius:6px;padding:1px 6px;font-size:.72rem;font-weight:700;margin-top:6px}
+.tile svg.spark{height:34px}
+.tile .cty{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;font-size:.85rem}
 /* ランキング */
 .rank .seg{display:flex;gap:6px;margin:8px 0 12px}
 .rank .seg button{flex:1;border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:999px;padding:6px 0;font:inherit;font-size:.82rem}
@@ -116,6 +128,7 @@ svg.spark{width:100%;height:46px;margin-top:6px}
 </header>
 <main>
   <section id="news">
+    <div id="dash"></div>
     <div id="digest"></div>
     <h2 class="sec">すべての記事</h2>
     <div class="filters" id="filters"></div>
@@ -148,6 +161,54 @@ const fmtDate = iso => {
 const translateUrl = n => n.lang === "ja" || n.link.includes("news.google.com") ? null
   : `https://translate.google.com/translate?sl=auto&tl=ja&u=${encodeURIComponent(n.link)}`;
 const SAFARI_TIP = `<div class="tip">🌏 海外の記事は、開いたあと Safari のアドレス欄の<b>「ぁあ」→「日本語に翻訳」</b>を押すと日本語で読めます。</div>`;
+
+const DASH_NAME = "中島健人";
+
+// 指定した指標でのグループ内の順位（数字があるグループの中で）
+function rankOf(pick, name) {
+  const rows = Object.entries(data.fanclub).map(([n, g]) => ({n, p: pick(g)})).filter(r => r.p)
+    .sort((a, b) => b.p.value - a.p.value);
+  const i = rows.findIndex(r => r.n === name);
+  return i < 0 ? null : {no: i + 1, of: rows.length};
+}
+
+function renderDash() {
+  const g = data.fanclub[DASH_NAME] || {};
+  const el = document.getElementById("dash");
+  const short = v => v >= 10000 ? (v / 10000).toLocaleString("ja-JP", {maximumFractionDigits: 1}) + "万" : num(v);
+  const last = k => (g[k] || []).at(-1);
+  // FC：会員番号（ファン・本人の報告）を主に、サイトの推計を添える
+  const mno = last("member_no"), fc = fcLatest(g);
+  const fcRank = rankOf(fcLatest, DASH_NAME);
+  const fcTile = `<div class="tile"><div class="lb">🎫 ファンクラブ</div>
+    ${mno ? `<div class="vv">${short(mno.value)}<small>番台</small></div><div class="sub">会員番号ベース（${esc(mno.date)}）</div>`
+      : fc ? `<div class="vv">${short(fc.value)}<small>人</small></div>` : `<div class="vv">—</div>`}
+    ${fc ? `<div class="sub">${fc.press ? "推計" : "公式"} <b>${short(fc.value)}人</b>（${esc(fc.date)}）</div>` : ""}
+    ${fcRank ? `<span class="rk">STARTO内 ${fcRank.no}位 / ${fcRank.of}</span>` : ""}</div>`;
+  // YouTube
+  const yt = g.youtube || [], ytl = yt.at(-1), ytp = yt.at(-2);
+  const ytRank = rankOf(ytLatest, DASH_NAME);
+  const ytTile = `<div class="tile"><div class="lb">▶️ YouTube 登録者</div>
+    ${ytl ? `<div class="vv">${short(ytl.value)}<small>人</small></div>
+      <div class="sub">${ytp && ytl.value !== ytp.value ? `<span class="${ytl.value > ytp.value ? "up" : "down"}">${ytl.value > ytp.value ? "+" : ""}${num(ytl.value - ytp.value)}</span>（前日比）` : `${esc(ytl.date)} 時点`}</div>
+      ${spark(yt)}${ytRank ? `<span class="rk">STARTO内 ${ytRank.no}位 / ${ytRank.of}</span>` : ""}`
+      : `<div class="vv">—</div><div class="sub">次回の更新から記録します</div>`}</div>`;
+  // ニュース量
+  const now = Date.now(), within = (n, days) => n.published && now - new Date(n.published) < days * 864e5;
+  const d3 = data.news.filter(n => within(n, 3)), d30 = data.news.filter(n => within(n, 30));
+  const abroad30 = d30.filter(n => n.lang !== "ja");
+  const newsTile = `<div class="tile"><div class="lb">📰 ニュース</div>
+    <div class="vv">${d3.length}<small>件</small></div><div class="sub">ここ3日間（30日間で <b>${d30.length}件</b>）</div></div>`;
+  // 海外での話題（30日間の国別）
+  const byLang = {};
+  abroad30.forEach(n => byLang[n.lang] = (byLang[n.lang] || 0) + 1);
+  const top = Object.entries(byLang).sort((a, b) => b[1] - a[1]).slice(0, 4);
+  const abroadTile = `<div class="tile"><div class="lb">🌏 海外での話題</div>
+    <div class="vv">${d30.length ? Math.round(abroad30.length / d30.length * 100) : 0}<small>%</small></div>
+    <div class="sub">30日間の記事のうち海外メディア</div>
+    <div class="cty">${top.map(([l, c]) => `<span>${FLAG[l] || ""} ${c}</span>`).join("")}</div></div>`;
+  el.innerHTML = `<h2 class="sec">${DASH_NAME} ダッシュボード</h2><div class="dash">${fcTile}${ytTile}${newsTile}${abroadTile}</div>`;
+}
 
 function renderSlides(d) {
   const top = d.topics.slice(0, 8);
@@ -203,6 +264,7 @@ function renderDigest() {
 }
 
 function renderNews() {
+  renderDash();
   renderDigest();
   syncDots();
   const present = new Set(data.news.map(n => n.lang));

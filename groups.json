@@ -65,13 +65,17 @@
       "name": "NEWS",
       "wikipedia": "NEWS (グループ)",
       "youtube_channel_id": "",
-      "spotify_artist_id": ""
+      "spotify_artist_id": "",
+      "youtube_handle": "@NEWS0915_official",
+      "note": "チャンネル名は「にゅうちゅうぶ」"
     },
     {
       "name": "SUPER EIGHT",
       "wikipedia": "SUPER EIGHT",
       "youtube_channel_id": "",
-      "spotify_artist_id": ""
+      "spotify_artist_id": "",
+      "youtube": "none",
+      "note": "単独の公式チャンネルなし（Storm Labels の共同チャンネルは他グループ分も含むため使わない）"
     },
     {
       "name": "WEST.",
@@ -90,24 +94,38 @@
       "wikipedia": "中島健人",
       "youtube_channel_id": "",
       "spotify_artist_id": "",
-      "solo": true
+      "solo": true,
+      "youtube_handle": "@n_kento_official",
+      "note": "Sony Music の公式プロフィールに載っているチャンネル"
     },
     {
       "name": "嵐",
       "wikipedia": "嵐",
-      "youtube_channel_id": "",
-      "spotify_artist_id": ""
+      "youtube_channel_id": "UCP7Gw_YZAuh4Yg2fcdcuumQ",
+      "spotify_artist_id": "",
+      "note": "チャンネル名は「ARASHI」"
     },
     {
       "name": "櫻井翔",
       "wikipedia": "櫻井翔",
       "youtube_channel_id": "",
       "spotify_artist_id": "",
-      "solo": true
+      "solo": true,
+      "youtube": "none",
+      "note": "個人の公式チャンネルなし（動画は嵐のチャンネル）"
     },
     {
       "name": "相葉雅紀",
       "wikipedia": "相葉雅紀",
+      "youtube_channel_id": "",
+      "spotify_artist_id": "",
+      "solo": true,
+      "youtube": "none",
+      "note": "個人の公式チャンネルなし（動画は嵐のチャンネル）"
+    },
+    {
+      "name": "木村拓哉",
+      "wikipedia": "木村拓哉",
       "youtube_channel_id": "",
       "spotify_artist_id": "",
       "solo": true
