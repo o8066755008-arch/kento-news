@@ -92,12 +92,13 @@ class CrawlerTest(unittest.TestCase):
         articles = digest.recent_articles(self.conn, now)
         self.assertEqual(len(articles), 1)
         self.assertEqual(digest.recent_articles(self.conn, datetime(2026, 10, 30, tzinfo=timezone.utc)), [])
-        fake = {"topics": [{"region": "海外", "title": "T", "summary": "S", "article_ids": [0, 5]},
-                           {"region": "国内", "title": "空", "summary": "S", "article_ids": [9]}]}
+        fake = {"topics": [{"region": "海外", "title": "T", "summary": "S", "points": ["a", "b", "c", "d"], "article_ids": [0, 5]},
+                           {"region": "国内", "title": "空", "summary": "S", "points": [], "article_ids": [9]}]}
         with mock.patch("translate.ask_json", return_value=fake):
             d = digest.build_digest(articles)
         self.assertEqual(len(d["topics"]), 1)
         self.assertEqual(d["topics"][0]["articles"][0]["link"], "https://example.com/a")
+        self.assertEqual(d["topics"][0]["points"], ["a", "b", "c"])
 
     def test_bing_gives_real_url_and_https_image(self):
         it = crawler.parse_bing_rss(BING, "ko")[0]

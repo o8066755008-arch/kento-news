@@ -15,6 +15,7 @@ import translate
 from crawler import open_db
 
 DAYS = 3
+VERSION = 2
 
 SYSTEM = (
     "あなたは中島健人さんのファン向けニュースの編集者です。渡された見出しの一覧を、"
@@ -22,6 +23,7 @@ SYSTEM = (
     "- region は日本国内での活動・話題なら「国内」、韓国やアジア・欧米など海外での活動や"
     "海外メディアの話題なら「海外」にします。\n"
     "- title は20字程度の見出し、summary は見出しから分かることだけを2〜3文の日本語で書きます。"
+    "- points はスライド用の要点で、1つ25字以内の短い文を2〜3個にします。\n"
     "見出しにない内容を推測で足さないでください。\n"
     "- article_ids には、そのトピックに含まれる記事の番号をすべて入れます。\n"
     "- 中島健人さんと関係の薄い記事はトピックにしなくてかまいません。\n"
@@ -39,9 +41,10 @@ SCHEMA = {
                     "region": {"type": "string", "enum": ["国内", "海外"]},
                     "title": {"type": "string"},
                     "summary": {"type": "string"},
+                    "points": {"type": "array", "items": {"type": "string"}},
                     "article_ids": {"type": "array", "items": {"type": "integer"}},
                 },
-                "required": ["region", "title", "summary", "article_ids"],
+                "required": ["region", "title", "summary", "points", "article_ids"],
                 "additionalProperties": False,
             },
         }
@@ -80,11 +83,15 @@ def build_digest(articles: list[dict]) -> dict | None:
         if not ids:
             continue
         topics.append({
-            "region": t["region"], "title": t["title"], "summary": t["summary"],
+            "region": t["region"], "title": t["title"], "summary": t["summary"], "points": t["points"][:3],
             "articles": [{k: articles[i][k] for k in ("title", "link", "source", "published", "lang")}
                          for i in ids],
         })
-    return {"days": DAYS, "generated": datetime.now().strftime("%Y-%m-%d %H:%M"), "topics": topics}
+    lang_counts: dict[str, int] = {}
+    for a in articles:
+        lang_counts[a["lang"]] = lang_counts.get(a["lang"], 0) + 1
+    return {"days": DAYS, "generated": datetime.now().strftime("%Y-%m-%d %H:%M"), "topics": topics,
+            "article_count": len(articles), "lang_counts": lang_counts}
 
 
 def main() -> int:
@@ -93,7 +100,8 @@ def main() -> int:
     if not articles:
         print(f"[トピックス] ここ{DAYS}日間の記事がありません")
         return 0
-    digest_key = hashlib.sha256(json.dumps([a["link"] for a in articles]).encode()).hexdigest()
+    # まとめの形式を変えたら VERSION を上げて作り直す
+    digest_key = hashlib.sha256(json.dumps([VERSION] + [a["link"] for a in articles]).encode()).hexdigest()
     row = conn.execute("SELECT value FROM watch_state WHERE key = 'digest_key'").fetchone()
     if row and row[0] == digest_key:
         print("[トピックス] 記事に変化がないため前回のまとめを使います")

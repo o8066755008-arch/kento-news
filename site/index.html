@@ -59,6 +59,46 @@ h3.region{font-size:.9rem;color:var(--sub);margin:14px 0 0}
 .topic .src{display:block;color:var(--sub);font-size:.75rem}
 .up{color:#2e7d32}.down{color:#c62828}
 svg.spark{width:100%;height:46px;margin-top:6px}
+/* トピックの関連記事 */
+.topic .toggle{color:var(--accent);font-weight:600}
+.topic .toggle::before{content:"▼ "}
+.topic[open] .toggle::before{content:"▲ "}
+.topic li{margin:0}
+.topic li a.row{display:flex;gap:10px;align-items:center;padding:10px 12px;margin:0 0 8px;border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:10px;background:var(--bg);color:var(--text);text-decoration:none}
+.topic li a.row .rt{flex:1;min-width:0}
+.topic li a.row b{display:block;font-size:.88rem;line-height:1.5}
+.topic li a.row .go{flex:none;color:#fff;background:var(--accent);border-radius:999px;padding:4px 10px;font-size:.75rem;font-weight:700}
+.tip{background:var(--chip);border-radius:10px;padding:10px 12px;font-size:.8rem;line-height:1.6;margin:6px 0}
+.meta a.tr{position:relative;z-index:1;color:var(--accent)}
+/* スライド */
+.slides{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;margin:4px -16px 0;padding:4px 16px 8px;scrollbar-width:none}
+.slides::-webkit-scrollbar{display:none}
+.slide{flex:none;width:86%;max-width:420px;aspect-ratio:4/5;scroll-snap-align:center;border-radius:18px;position:relative;overflow:hidden;color:#fff;background:linear-gradient(150deg,#c2185b,#6a1b4d)}
+.slide img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.slide .shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.15) 0%,rgba(0,0,0,.35) 40%,rgba(0,0,0,.85) 100%)}
+.slide .body{position:absolute;inset:auto 0 0 0;padding:18px}
+.slide .badge{display:inline-block;background:rgba(255,255,255,.92);color:#6a1b4d;border-radius:999px;padding:3px 10px;font-size:.75rem;font-weight:700}
+.slide h3{font-size:1.25rem;line-height:1.4;margin:10px 0 8px}
+.slide ul{margin:0;padding-left:1.1em;font-size:.88rem;line-height:1.6}
+.slide button{margin-top:12px;border:0;border-radius:999px;background:#fff;color:#6a1b4d;font:inherit;font-weight:700;font-size:.82rem;padding:7px 14px}
+.slide.cover .body{inset:0;display:flex;flex-direction:column;justify-content:center;align-items:flex-start}
+.slide.cover .big{font-size:2.6rem;font-weight:800;line-height:1}
+.slide.cover .flags{font-size:1.1rem;line-height:1.9;margin-top:10px}
+.dots{display:flex;justify-content:center;gap:6px;margin:2px 0 6px}
+.dots i{width:6px;height:6px;border-radius:50%;background:var(--line)}
+.dots i.on{background:var(--accent)}
+/* ランキング */
+.rank .seg{display:flex;gap:6px;margin:8px 0 12px}
+.rank .seg button{flex:1;border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:999px;padding:6px 0;font:inherit;font-size:.82rem}
+.rank .seg button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.bar{display:grid;grid-template-columns:1.6em 7.2em 1fr;gap:8px;align-items:center;margin:0 0 10px;font-size:.85rem}
+.bar .no{color:var(--sub);font-weight:700;text-align:right}
+.bar .nm{overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-weight:600}
+.bar{margin:0 0 12px}
+.bar .track{display:block}
+.bar .fill{height:14px;background:var(--accent);border-radius:0 4px 4px 0;min-width:4px}
+.bar .val{display:block;font-size:.75rem;color:var(--sub);margin-top:2px}
+.bar .val em{font-style:normal;color:var(--accent);font-weight:700;margin-left:4px}
 </style>
 </head>
 <body>
@@ -99,42 +139,81 @@ const fmtDate = iso => {
   return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 };
 
-// 海外の記事は Google 翻訳を通して日本語で開く（うまく開けないときは「原文で開く」から）
-const openUrl = n => n.lang === "ja" ? n.link
+// 記事は元のページを開く（Google 翻訳経由は多くのサイトで「障害が発生しています」になるため）。
+// 海外の記事は Safari の翻訳機能で日本語にしてもらう。直接リンクの記事にだけ Google 翻訳のリンクも付ける
+const translateUrl = n => n.lang === "ja" || n.link.includes("news.google.com") ? null
   : `https://translate.google.com/translate?sl=auto&tl=ja&u=${encodeURIComponent(n.link)}`;
+const SAFARI_TIP = `<div class="tip">🌏 海外の記事は、開いたあと Safari のアドレス欄の<b>「ぁあ」→「日本語に翻訳」</b>を押すと日本語で読めます。</div>`;
+
+function renderSlides(d) {
+  const top = d.topics.slice(0, 8);
+  const flags = Object.entries(d.lang_counts || {}).sort((a, b) => b[1] - a[1])
+    .map(([l, c]) => `${FLAG[l] || ""} ${LANG[l] || l} ${c}`).join("　");
+  const cover = `<div class="slide cover"><div class="body">
+      <div class="badge">ここ${d.days}日間のまとめ</div>
+      <div class="big" style="margin-top:14px">${d.topics.length}<small style="font-size:1rem"> トピック</small></div>
+      <div style="margin-top:6px">🇯🇵 国内 ${d.topics.filter(t => t.region === "国内").length}　🌏 海外 ${d.topics.filter(t => t.region === "海外").length}</div>
+      ${d.article_count ? `<div style="margin-top:6px">記事 ${d.article_count} 件</div>` : ""}
+      ${flags ? `<div class="flags">${flags}</div>` : ""}
+      <div style="margin-top:14px;font-size:.8rem;opacity:.85">← 横にスワイプ</div></div></div>`;
+  const slides = top.map((t, i) => {
+    const img = (t.articles.find(a => a.image) || {}).image;
+    return `<div class="slide">
+      ${img ? `<img src="${esc(img)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : ""}
+      <div class="shade"></div>
+      <div class="body"><span class="badge">${t.region === "国内" ? "🇯🇵 国内" : "🌏 海外"}　${i + 1} / ${top.length}</span>
+        <h3>${esc(t.title)}</h3>
+        <ul>${(t.points && t.points.length ? t.points : [t.summary]).map(p => `<li>${esc(p)}</li>`).join("")}</ul>
+        <button data-open-topic="${d.topics.indexOf(t)}">関連記事 ${t.articles.length} 件を見る ›</button></div></div>`;
+  }).join("");
+  return `<h2 class="sec">ハイライト</h2><div class="slides" id="slides">${cover}${slides}</div>
+    <div class="dots" id="dots">${"<i></i>".repeat(top.length + 1)}</div>`;
+}
+
+function syncDots() {
+  const el = document.getElementById("slides");
+  if (!el) return;
+  const slide = el.querySelector(".slide");
+  const i = Math.round(el.scrollLeft / ((slide?.offsetWidth || 1) + 12));
+  document.querySelectorAll("#dots i").forEach((d, j) => d.classList.toggle("on", j === i));
+}
+document.addEventListener("scroll", e => { if (e.target.id === "slides") syncDots(); }, true);
 
 function renderDigest() {
   const d = data.digest, el = document.getElementById("digest");
   if (!d || !d.topics.length) { el.innerHTML = ""; return; }
-  el.innerHTML = `<h2 class="sec">ここ${d.days}日間のトピックス</h2>` + ["国内", "海外"].map(region => {
+  el.innerHTML = renderSlides(d) + `<h2 class="sec">ここ${d.days}日間のトピックス</h2>` + ["国内", "海外"].map(region => {
     const topics = d.topics.filter(t => t.region === region);
     if (!topics.length) return "";
     return `<h3 class="region">${region === "国内" ? "🇯🇵 国内" : "🌏 海外"}</h3>` + topics.map(t => `
-      <details class="card topic">
+      <details class="card topic" id="topic-${d.topics.indexOf(t)}">
         <summary>${thumb((t.articles.find(a => a.image) || {}).image, "hero")}<div class="t">${esc(t.title)}</div>
           <div class="o">${esc(t.summary)}</div>
-          <div class="meta"><span class="chip">記事 ${t.articles.length} 件</span><span class="more">タップで記事を見る</span></div></summary>
-        <ul>${t.articles.map(a => `<li><a href="${esc(openUrl(a))}" target="_blank" rel="noopener">${esc(a.title)}</a>
-          <span class="src">${a.lang !== "ja" ? (FLAG[a.lang] || "") + " " + (LANG[a.lang] || a.lang) + " ・ " : ""}${esc(a.source)} ・ ${fmtDate(a.published)}</span></li>`).join("")}</ul>
+          <div class="meta"><span class="toggle">関連記事 ${t.articles.length} 件を表示</span></div></summary>
+        <ul>${t.articles.map(a => `<li><a class="row" href="${esc(a.link)}" target="_blank" rel="noopener">
+          <span class="rt"><b>${esc(a.title)}</b>
+          <span class="src">${a.lang !== "ja" ? (FLAG[a.lang] || "") + " " + (LANG[a.lang] || a.lang) + " ・ " : ""}${esc(a.source)} ・ ${fmtDate(a.published)}</span></span>
+          <span class="go">記事を読む ›</span></a></li>`).join("")}</ul>
       </details>`).join("");
   }).join("") + `<p class="note">見出しをもとに AI がまとめています（${esc(d.generated)} 作成）。詳しくは各記事をご覧ください。</p>`;
 }
 
 function renderNews() {
   renderDigest();
+  syncDots();
   const present = new Set(data.news.map(n => n.lang));
   document.getElementById("filters").innerHTML = Object.entries(LANG).filter(([k]) => k === "all" || present.has(k)).map(([k, v]) =>
     `<button data-f="${k}" class="${k === filter ? "on" : ""}">${v}</button>`).join("");
   const items = data.news.filter(n => filter === "all" || n.lang === filter);
-  document.getElementById("list").innerHTML = items.length ? items.map(n => `
+  document.getElementById("list").innerHTML = (filter !== "ja" ? SAFARI_TIP : "") + (items.length ? items.map(n => `
     <div class="card news">
       ${listThumb(n)}
-      <a class="cover" href="${esc(openUrl(n))}" target="_blank" rel="noopener"><div class="t">${esc(n.title)}</div></a>
+      <a class="cover" href="${esc(n.link)}" target="_blank" rel="noopener"><div class="t">${esc(n.title)}</div></a>
       ${n.original ? `<div class="o">${n.translated ? "原文: " : "（翻訳待ち）"}${esc(n.original)}</div>` : ""}
       <div class="meta">${n.lang !== "ja" ? `<span class="chip">${FLAG[n.lang] || ""} ${LANG[n.lang] || n.lang}</span>` : ""}
         <span>${esc(n.source)}</span><span>${fmtDate(n.published)}</span>
-        ${n.lang !== "ja" ? `<a class="orig" href="${esc(n.link)}" target="_blank" rel="noopener">原文で開く</a>` : ""}</div>
-    </div>`).join("") : `<div class="empty">ニュースはまだありません</div>`;
+        ${translateUrl(n) ? `<a class="tr" href="${esc(translateUrl(n))}" target="_blank" rel="noopener">Google翻訳で開く</a>` : ""}</div>
+    </div>`).join("") : `<div class="empty">ニュースはまだありません</div>`);
 }
 
 function spark(points) {
@@ -147,6 +226,7 @@ function spark(points) {
 
 const METRICS = [
   {key: "official", label: "公式発表の会員数", unit: "人", note: "ニュース・Wikipedia から"},
+  {key: "press", label: "報道での推定会員数", unit: "人", note: "ニュース・Wikipedia から"},
   {key: "member_no", label: "最新の会員番号（推定）", unit: "番台", note: "ファンの投稿から", masked: true},
   {key: "youtube", label: "YouTube 登録者数", unit: "人", note: "毎日記録", daily: true},
   {key: "spotify", label: "Spotify フォロワー数", unit: "人", note: "毎日記録", daily: true},
@@ -169,15 +249,37 @@ function metricRow(m, pts) {
   </div>`;
 }
 
+let rankBy = "fc";
+// FC 会員数は公式発表を優先し、なければ報道での推定を使う
+const fcLatest = g => (g.official || []).at(-1) ? {...g.official.at(-1), press: false}
+  : (g.press || []).at(-1) ? {...g.press.at(-1), press: true} : null;
+const ytLatest = g => (g.youtube || []).at(-1) || null;
+
+function renderRanking() {
+  const pick = rankBy === "fc" ? fcLatest : ytLatest;
+  const rows = Object.entries(data.fanclub).map(([name, g]) => ({name, p: pick(g)}))
+    .filter(r => r.p).sort((a, b) => b.p.value - a.p.value).slice(0, 5);
+  const max = rows.length ? rows[0].p.value : 1;
+  const bars = rows.map((r, i) => `<div class="bar" title="${esc(r.name)}：${num(r.p.value)} 人（${esc(r.p.date)} 時点${r.p.press ? "・報道での推定" : ""}）">
+      <span class="no">${i + 1}</span><span class="nm">${esc(r.name)}</span>
+      <span class="track"><span class="fill" style="display:block;width:${Math.max(2, r.p.value / max * 100)}%"></span>
+        <span class="val">${num(r.p.value)} 人${r.p.press ? "<em>推定</em>" : ""}　${esc(r.p.date)}</span></span></div>`).join("");
+  return `<div class="card rank"><div class="t">ランキング（上位5）</div>
+    <div class="seg"><button data-rank="fc" class="${rankBy === "fc" ? "on" : ""}">FC会員数</button>
+      <button data-rank="yt" class="${rankBy === "yt" ? "on" : ""}">YouTube登録者</button></div>
+    ${bars || `<div class="note">まだデータがありません</div>`}
+    ${rankBy === "fc" ? `<p class="note">公式発表・報道に数字が出たグループだけが並びます。「推定」は報道での見立てです。</p>` : ""}</div>`;
+}
+
 function renderFanclub() {
-  const latest = (g, k) => (g[k] || []).at(-1)?.value ?? -1;
+  const sortKey = g => (rankBy === "fc" ? fcLatest(g) : ytLatest(g))?.value ?? -1;
   const groups = Object.entries(data.fanclub).sort((a, b) =>
-    latest(b[1], "official") - latest(a[1], "official") || latest(b[1], "youtube") - latest(a[1], "youtube"));
+    sortKey(b[1]) - sortKey(a[1]) || (ytLatest(b[1])?.value ?? -1) - (ytLatest(a[1])?.value ?? -1));
   const form = data.fan_form_url ? `<a class="card cta" href="${esc(data.fan_form_url)}" target="_blank" rel="noopener">
       <div class="t">📮 あなたの会員番号を教えてください</div>
       <div class="o">下3桁は伏せたまま（例: 1234xxx）、グループと番号だけを匿名で送れます。集まった番号から最新の会員番号を推定します。</div></a>` : "";
   const note = `<p class="note">公式発表はニュース・Wikipedia に載ったときだけ更新されます。会員番号は退会者を含む通し番号のため、今の会員数とは一致しません。</p>`;
-  document.getElementById("fanclub").innerHTML = form + (groups.length ? groups.map(([name, g]) => `
+  document.getElementById("fanclub").innerHTML = renderRanking() + form + (groups.length ? groups.map(([name, g]) => `
     <div class="card fc"><div class="t">${esc(name)}</div>${METRICS.map(m => metricRow(m, g[m.key])).join("")}</div>`).join("") + note
     : `<div class="empty">まだデータがありません<br>毎日の記録が始まると、ここに推移が表示されます</div>`);
 }
@@ -188,7 +290,16 @@ document.addEventListener("click", e => {
     document.querySelectorAll("[data-tab]").forEach(b => b.setAttribute("aria-selected", b === tab));
     document.getElementById("news").hidden = tab.dataset.tab !== "news";
     document.getElementById("fanclub").hidden = tab.dataset.tab !== "fanclub";
+    window.scrollTo(0, 0);
   }
+  const ot = e.target.closest("[data-open-topic]");
+  if (ot) {
+    const el = document.getElementById("topic-" + ot.dataset.openTopic);
+    el.open = true;
+    el.scrollIntoView({behavior: "smooth", block: "start"});
+  }
+  const rk = e.target.closest("[data-rank]");
+  if (rk) { rankBy = rk.dataset.rank; renderFanclub(); }
   const f = e.target.closest("[data-f]");
   if (f) { filter = f.dataset.f; renderNews(); }
 });

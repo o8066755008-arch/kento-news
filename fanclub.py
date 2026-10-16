@@ -72,8 +72,10 @@ def get_json(url: str, headers: dict | None = None, data: bytes | None = None) -
 
 EXTRACT_SYSTEM = (
     "あなたは芸能ニュースのデータ担当です。渡されたテキストから、ファンクラブの会員数が"
-    "はっきり書かれている箇所だけを抜き出してください。推測はせず、会員数の記述がなければ"
+    "数字で書かれている箇所だけを抜き出してください。テキストにない数字は作らず、会員数の記述がなければ"
     "空の配列を返します。「120万人」は 1200000 のように人数を整数にします。"
+    "kind は、公式発表・本人や事務所の発言にもとづくなら「official」、"
+    "「〜とみられる」「〜ようだ」「推定」など報道側の見立てなら「press」にします。"
     "date は会員数がその数になった（または発表された）日付が書かれていれば YYYY-MM-DD、"
     "なければ空文字にします。quote には根拠となる原文を短く入れます。"
 )
@@ -91,9 +93,10 @@ def extract_schema(group_names: list[str]) -> dict:
                         "group": {"type": "string", "enum": group_names},
                         "count": {"type": "integer"},
                         "date": {"type": "string"},
+                        "kind": {"type": "string", "enum": ["official", "press"]},
                         "quote": {"type": "string"},
                     },
-                    "required": ["group", "count", "date", "quote"],
+                    "required": ["group", "count", "date", "kind", "quote"],
                     "additionalProperties": False,
                 },
             }
@@ -109,8 +112,9 @@ def save_official(conn, items: list[dict], source: str, fallback_day: str) -> in
         if not 0 < it["count"] <= MAX_COUNT:
             continue
         day = it["date"] if re.fullmatch(r"\d{4}-\d{2}-\d{2}", it["date"]) else fallback_day
-        record(conn, it["group"], "official", it["count"], source, day)
-        print(f"[公式] {it['group']} {it['count']:,} 人（{day}）: {it['quote']}")
+        kind = it.get("kind", "official")
+        record(conn, it["group"], kind, it["count"], source, day)
+        print(f"[{'公式' if kind == 'official' else '報道'}] {it['group']} {it['count']:,} 人（{day}）: {it['quote']}")
         saved += 1
     return saved
 
@@ -120,12 +124,12 @@ def crawl_news(conn, groups: list[dict]) -> None:
     new = []
     for name in names:
         try:
-            items = parse_rss(fetch(feed_url(f'"{name}" ファンクラブ 会員数', "ja", "JP", "JP:ja")))
+            items = parse_rss(fetch(feed_url(f'"{name}" (ファンクラブ OR FC) 会員', "ja", "JP", "JP:ja")))
         except Exception as e:
             print(f"[ニュース] {name} の取得に失敗しました: {e}", file=sys.stderr)
             continue
         for it in items:
-            if get_state(conn, "news:" + it["link"]) is None and re.search(r"会員", it["title"]):
+            if get_state(conn, "news2:" + it["link"]) is None and re.search(r"会員|FC|ファンクラブ", it["title"]):
                 new.append(it)
     if not new:
         print("[ニュース] 会員数の新しい記事はありません")
@@ -138,7 +142,7 @@ def crawl_news(conn, groups: list[dict]) -> None:
         src = next((n for n in new if it["quote"] and it["quote"][:10] in n["title"]), None)
         save_official(conn, [it], src["link"] if src else "ニュース", (src or new[0])["published"][:10] or date.today().isoformat())
     for it in new:
-        set_state(conn, "news:" + it["link"], "1")
+        set_state(conn, "news2:" + it["link"], "1")
 
 
 def wiki_snippets(wikitext: str) -> str:
@@ -166,7 +170,7 @@ def crawl_wikipedia(conn, groups: list[dict]) -> None:
             continue
         snippet = wiki_snippets(wikitext)
         digest = hashlib.sha256(snippet.encode()).hexdigest()
-        if snippet and get_state(conn, "wiki:" + g["name"]) != digest:
+        if snippet and get_state(conn, "wiki2:" + g["name"]) != digest:
             changed.append((g, snippet, digest))
     if not changed:
         print("[Wikipedia] 会員数の記述に変化はありません")
@@ -180,7 +184,7 @@ def crawl_wikipedia(conn, groups: list[dict]) -> None:
         items = [it for it in result["items"] if it["group"] == g["name"]]
         url = "https://ja.wikipedia.org/wiki/" + urllib.parse.quote(g["wikipedia"])
         save_official(conn, items, url, date.today().isoformat())
-        set_state(conn, "wiki:" + g["name"], digest)
+        set_state(conn, "wiki2:" + g["name"], digest)
 
 
 # ---------------------------------------------------------------- ファンの投稿（会員番号）

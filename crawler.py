@@ -172,7 +172,7 @@ def open_db(path: Path = DB_PATH) -> sqlite3.Connection:
             PRIMARY KEY (date, grp, metric)
         )"""
     )
-    # 前回の状態（Wikipedia の内容、確認済みニュース、チャンネル ID など）
+    # 前回の状態（Wikipedia の内容、確認済みニュース、チャンネル ID など）。読み取り方を変えたときはキーの版を上げて読み直す
     conn.execute("CREATE TABLE IF NOT EXISTS watch_state (key TEXT PRIMARY KEY, value TEXT)")
     conn.execute("DROP TABLE IF EXISTS fanclub_counts")
     return conn

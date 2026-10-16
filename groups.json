@@ -73,6 +73,13 @@
       "wikipedia": "Aぇ! group",
       "youtube_channel_id": "",
       "spotify_artist_id": ""
+    },
+    {
+      "name": "中島健人",
+      "wikipedia": "中島健人",
+      "youtube_channel_id": "",
+      "spotify_artist_id": "",
+      "solo": true
     }
   ]
 }
