@@ -1,0 +1,46 @@
+# 毎日 日本時間 7:00 にニュース・FC会員数を取得して GitHub Pages に公開する
+name: daily
+
+on:
+  schedule:
+    - cron: "0 22 * * *"   # UTC 22:00 = 日本時間 7:00
+  workflow_dispatch:         # GitHub の画面から手動でも実行できる
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: daily
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: pip install anthropic
+      - name: 取得・翻訳・記録
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: ./run_daily.sh || true
+      - name: データを保存
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add data.db site/data.json
+          git commit -m "データ更新 $(date +%F)" || echo "変更なし"
+          git push
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - id: deploy
+        uses: actions/deploy-pages@v4

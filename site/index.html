@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#c2185b">
+<title>中島健人 ニュース</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg">
+<link rel="apple-touch-icon" href="icon.svg">
+<style>
+:root{--bg:#fbf8f9;--card:#fff;--text:#1f1a1c;--sub:#76696e;--line:#eee4e8;--accent:#c2185b;--chip:#fbe6ee}
+@media (prefers-color-scheme:dark){:root{--bg:#141012;--card:#1e191b;--text:#f3edef;--sub:#a99ca1;--line:#2e2629;--accent:#f06292;--chip:#3a2230}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Hiragino Sans",sans-serif;-webkit-text-size-adjust:100%}
+header{position:sticky;top:0;z-index:2;background:var(--bg);padding:calc(12px + env(safe-area-inset-top)) 16px 0;border-bottom:1px solid var(--line)}
+h1{font-size:1.15rem;margin:0 0 2px}
+.updated{color:var(--sub);font-size:.75rem}
+.tabs{display:flex;gap:4px;margin-top:10px}
+.tabs button{flex:1;border:0;background:none;color:var(--sub);font:inherit;font-weight:600;padding:10px 0;border-bottom:3px solid transparent}
+.tabs button[aria-selected=true]{color:var(--accent);border-color:var(--accent)}
+main{max-width:720px;margin:0 auto;padding:12px 16px calc(24px + env(safe-area-inset-bottom))}
+.filters{display:flex;gap:8px;overflow-x:auto;padding-bottom:8px}
+.filters button{flex:none;border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:999px;padding:6px 14px;font:inherit;font-size:.85rem}
+.filters button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.card{display:block;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin:10px 0;color:inherit;text-decoration:none}
+.card .t{font-weight:600;line-height:1.5}
+.card .o{color:var(--sub);font-size:.8rem;margin-top:6px;line-height:1.4}
+.meta{display:flex;gap:8px;align-items:center;color:var(--sub);font-size:.78rem;margin-top:8px;flex-wrap:wrap}
+.chip{background:var(--chip);color:var(--accent);border-radius:6px;padding:2px 7px;font-weight:600}
+.empty{color:var(--sub);text-align:center;padding:48px 8px;line-height:1.8}
+.fc .num{font-size:1.5rem;font-weight:700}
+.fc .diff{font-size:.85rem;margin-left:6px}
+.up{color:#2e7d32}.down{color:#c62828}
+svg.spark{width:100%;height:70px;margin-top:8px}
+</style>
+</head>
+<body>
+<header>
+  <h1>中島健人 ニュース</h1>
+  <div class="updated" id="updated">読み込み中…</div>
+  <nav class="tabs" role="tablist">
+    <button role="tab" aria-selected="true" data-tab="news">ニュース</button>
+    <button role="tab" aria-selected="false" data-tab="fanclub">FC会員数</button>
+  </nav>
+</header>
+<main>
+  <section id="news">
+    <div class="filters" id="filters"></div>
+    <div id="list"></div>
+  </section>
+  <section id="fanclub" hidden></section>
+</main>
+<script>
+const LANG = {all: "すべて", ja: "日本", ko: "韓国", en: "海外（英語）"};
+let data = {news: [], fanclub: {}}, filter = "all";
+
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const fmtDate = iso => {
+  if (!iso) return "";
+  const d = new Date(iso);
+  return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+};
+
+function renderNews() {
+  document.getElementById("filters").innerHTML = Object.entries(LANG).map(([k, v]) =>
+    `<button data-f="${k}" class="${k === filter ? "on" : ""}">${v}</button>`).join("");
+  const items = data.news.filter(n => filter === "all" || n.lang === filter);
+  document.getElementById("list").innerHTML = items.length ? items.map(n => `
+    <a class="card" href="${esc(n.link)}" target="_blank" rel="noopener">
+      <div class="t">${esc(n.title)}</div>
+      ${n.original ? `<div class="o">${n.translated ? "原文: " : "（翻訳待ち）"}${esc(n.original)}</div>` : ""}
+      <div class="meta">${n.lang !== "ja" ? `<span class="chip">${LANG[n.lang]}</span>` : ""}
+        <span>${esc(n.source)}</span><span>${fmtDate(n.published)}</span></div>
+    </a>`).join("") : `<div class="empty">ニュースはまだありません</div>`;
+}
+
+function spark(points) {
+  if (points.length < 2) return "";
+  const vals = points.map(p => p.count), min = Math.min(...vals), max = Math.max(...vals) || 1;
+  const xy = vals.map((v, i) => `${(i / (vals.length - 1)) * 300},${66 - ((v - min) / (max - min || 1)) * 60}`);
+  return `<svg class="spark" viewBox="0 0 300 70" preserveAspectRatio="none" role="img" aria-label="会員数の推移">
+    <polyline points="${xy.join(" ")}" fill="none" stroke="var(--accent)" stroke-width="2.5" vector-effect="non-scaling-stroke"/></svg>`;
+}
+
+function renderFanclub() {
+  const groups = Object.entries(data.fanclub)
+    .sort((a, b) => b[1].at(-1).count - a[1].at(-1).count);
+  document.getElementById("fanclub").innerHTML = groups.length ? groups.map(([name, pts]) => {
+    const last = pts.at(-1), prev = pts.at(-2);
+    const diff = prev ? last.count - prev.count : null;
+    return `<div class="card fc">
+      <div class="t">${esc(name)}</div>
+      <div><span class="num">${last.count.toLocaleString("ja-JP")}</span> 人
+        ${diff !== null ? `<span class="diff ${diff >= 0 ? "up" : "down"}">${diff >= 0 ? "+" : ""}${diff.toLocaleString("ja-JP")}（前日比）</span>` : ""}</div>
+      ${spark(pts)}
+      <div class="meta"><span>${esc(last.date)} 時点 ・ ${pts.length} 日分</span></div>
+    </div>`;
+  }).join("") : `<div class="empty">ファンクラブ会員数のデータはまだありません<br>毎日の記録が始まると、ここに推移が表示されます</div>`;
+}
+
+document.addEventListener("click", e => {
+  const tab = e.target.closest("[data-tab]");
+  if (tab) {
+    document.querySelectorAll("[data-tab]").forEach(b => b.setAttribute("aria-selected", b === tab));
+    document.getElementById("news").hidden = tab.dataset.tab !== "news";
+    document.getElementById("fanclub").hidden = tab.dataset.tab !== "fanclub";
+  }
+  const f = e.target.closest("[data-f]");
+  if (f) { filter = f.dataset.f; renderNews(); }
+});
+
+fetch("data.json", {cache: "no-store"}).then(r => r.json()).then(d => {
+  data = d;
+  document.getElementById("updated").textContent = `最終更新: ${d.updated}`;
+  renderNews(); renderFanclub();
+}).catch(() => {
+  document.getElementById("updated").textContent = "データを読み込めませんでした";
+  renderNews(); renderFanclub();
+});
+
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js");
+</script>
+</body>
+</html>
