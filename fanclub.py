@@ -524,9 +524,16 @@ def main() -> int:
         return 0
     config = load_config()
     groups = config["groups"]
-    for step in (crawl_news, crawl_wikipedia, crawl_youtube, crawl_spotify):
+    # 3時間おきに動くが、Wikipedia とまとめページは相手の負担を考えて1日1回だけ読みに行く
+    today = date.today().isoformat()
+    daily = get_state(conn, "fanclub_daily") != today
+    for step in (crawl_news, crawl_youtube, crawl_spotify) + ((crawl_wikipedia,) if daily else ()):
         step(conn, groups)
-    crawl_pages(conn, groups, config.get("watch_pages", []))
+    if daily:
+        crawl_pages(conn, groups, config.get("watch_pages", []))
+        set_state(conn, "fanclub_daily", today)
+    else:
+        print("[会員数] Wikipedia・まとめページは今日すでに確認済みです")
     load_manual(conn)
     crawl_fan_reports(conn, config)
     return 0

@@ -1,10 +1,10 @@
 {
-  "name": "中島 健人",
-  "short_name": "中島 健人",
+  "name": "中島 健人 まとめニュース",
+  "short_name": "中島 健人 まとめニュース",
   "start_url": "./",
   "display": "standalone",
-  "background_color": "#070f22",
-  "theme_color": "#132e5a",
+  "background_color": "#0b1424",
+  "theme_color": "#2a63a8",
   "lang": "ja",
   "icons": [
     {

@@ -8,6 +8,7 @@ import build_site
 import crawler
 import digest
 import notify
+import events
 import thumbnails
 import fanclub
 
@@ -173,6 +174,32 @@ class CrawlerTest(unittest.TestCase):
             fanclub.record(self.conn, grp, metric, v, "s", "2026-10-10")
         st = notify.current_state(self.conn, [{"name": "嵐", "ended": True}])
         self.assertEqual((st["fc"], st["fc_rank"], st["yt_rank"]), (100000, 2, 2))
+
+    def test_events_saved_once_and_old_ones_dropped(self):
+        events.open_events(self.conn)
+        from datetime import date, timedelta
+        soon = (date.today() + timedelta(days=10)).isoformat()
+        old = (date.today() - timedelta(days=400)).isoformat()
+        evs = [{"title": "ソウル公演", "kind": "ライブ", "date": soon, "date_text": "x", "place": "ソウル",
+                "region": "海外", "source_id": 0},
+               {"title": "昔の公演", "kind": "ライブ", "date": old, "date_text": "x", "place": "",
+                "region": "国内", "source_id": 0},
+               {"title": "日付未定のオフ会", "kind": "オフ会", "date": "未定", "date_text": "", "place": "",
+                "region": "国内", "source_id": 0},
+               {"title": "番号が変", "kind": "その他", "date": "", "date_text": "", "place": "",
+                "region": "国内", "source_id": 9}]
+        src = [{"url": "https://e/1", "source": "s"}]
+        self.assertEqual(events.save_events(self.conn, evs, src), 2)
+        self.assertEqual(events.save_events(self.conn, evs, src), 0)
+        self.assertTrue(events.EVENT_WORDS.search("中島健人、アジアツアー開催決定"))
+        self.assertTrue(events.EVENT_WORDS.search("나카지마 켄토 팬미팅"))
+        self.assertFalse(events.EVENT_WORDS.search("中島健人のインタビュー"))
+
+    def test_notify_new_event(self):
+        prev = {"topics": [], "events": ["a|11/3 ライブ"], "youtube": None, "fc": None, "member_no": None,
+                "fc_rank": None, "yt_rank": None}
+        cur = dict(prev, events=["a|11/3 ライブ", "b|12/1 ファンミ"])
+        self.assertEqual(notify.changes(prev, cur, {}), ["🎤 12/1 ファンミ"])
 
     def test_find_image(self):
         page = '<head><meta content="/img/a.jpg?x=1&amp;y=2" property="og:image"></head>'

@@ -1,9 +1,9 @@
-# 毎日 日本時間 7:00 にニュース・FC会員数を取得して GitHub Pages に公開する
+# 3時間おきにニュース・イベント・FC会員数を取得して GitHub Pages に公開する
 name: daily
 
 on:
   schedule:
-    - cron: "0 22 * * *"   # UTC 22:00 = 日本時間 7:00
+    - cron: "0 */3 * * *"   # 3時間おき（日本時間 0, 3, 6, 9, 12, 15, 18, 21 時）
   workflow_dispatch:         # GitHub の画面から手動でも実行できる
     inputs:
       test_push:

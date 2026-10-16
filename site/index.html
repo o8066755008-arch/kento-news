@@ -3,22 +3,24 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#c2185b">
-<title>中島健人 ニュース</title>
+<meta name="theme-color" content="#2a63a8">
+<title>中島 健人 まとめニュース</title>
 <link rel="manifest" href="manifest.json">
-<meta name="apple-mobile-web-app-title" content="中島 健人">
+<meta name="apple-mobile-web-app-title" content="中島 健人 まとめニュース">
 <link rel="icon" href="icon.svg">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <style>
-:root{--bg:#fbf8f9;--card:#fff;--text:#1f1a1c;--sub:#76696e;--line:#eee4e8;--accent:#c2185b;--chip:#fbe6ee}
-@media (prefers-color-scheme:dark){:root{--bg:#141012;--card:#1e191b;--text:#f3edef;--sub:#a99ca1;--line:#2e2629;--accent:#f06292;--chip:#3a2230}}
+:root{--bg:#f2f6fc;--card:#fff;--text:#13233a;--sub:#5f7189;--line:#dbe5f2;--accent:#2a63a8;--chip:#e2edfb;--deep:#173f6b}
+@media (prefers-color-scheme:dark){:root{--bg:#0b1424;--card:#121f35;--text:#e8f0fb;--sub:#93a6c2;--line:#22324d;--accent:#6fa8ec;--chip:#1b3150;--deep:#0d2546}}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Hiragino Sans",sans-serif;-webkit-text-size-adjust:100%}
 header{position:sticky;top:0;z-index:2;background:var(--bg);padding:calc(12px + env(safe-area-inset-top)) 16px 0;border-bottom:1px solid var(--line)}
 h1{font-size:1.15rem;margin:0 0 2px}
 .updated{color:var(--sub);font-size:.75rem}
 .tabs{display:flex;gap:4px;margin-top:10px}
-.tabs button{flex:1;border:0;background:none;color:var(--sub);font:inherit;font-weight:600;padding:10px 0;border-bottom:3px solid transparent}
+.tabs{overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{flex:1 0 auto;border:0;background:none;color:var(--sub);font:inherit;font-size:.9rem;font-weight:600;padding:10px 8px;border-bottom:3px solid transparent;white-space:nowrap}
 .tabs button[aria-selected=true]{color:var(--accent);border-color:var(--accent)}
 main{max-width:720px;margin:0 auto;padding:12px 16px calc(24px + env(safe-area-inset-bottom))}
 .filters{display:flex;gap:8px;overflow-x:auto;padding-bottom:8px}
@@ -78,14 +80,14 @@ svg.spark{width:100%;height:46px;margin-top:6px}
 /* スライド */
 .slides{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;margin:4px -16px 0;padding:4px 16px 8px;scrollbar-width:none}
 .slides::-webkit-scrollbar{display:none}
-.slide{flex:none;width:86%;max-width:420px;aspect-ratio:4/5;scroll-snap-align:center;border-radius:18px;position:relative;overflow:hidden;color:#fff;background:linear-gradient(150deg,#c2185b,#6a1b4d)}
+.slide{flex:none;width:86%;max-width:420px;aspect-ratio:4/5;scroll-snap-align:center;border-radius:18px;position:relative;overflow:hidden;color:#fff;background:linear-gradient(150deg,#2a63a8,#0d2546)}
 .slide img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .slide .shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.15) 0%,rgba(0,0,0,.35) 40%,rgba(0,0,0,.85) 100%)}
 .slide .body{position:absolute;inset:auto 0 0 0;padding:18px}
-.slide .badge{display:inline-block;background:rgba(255,255,255,.92);color:#6a1b4d;border-radius:999px;padding:3px 10px;font-size:.75rem;font-weight:700}
+.slide .badge{display:inline-block;background:rgba(255,255,255,.92);color:var(--deep);border-radius:999px;padding:3px 10px;font-size:.75rem;font-weight:700}
 .slide h3{font-size:1.25rem;line-height:1.4;margin:10px 0 8px}
 .slide ul{margin:0;padding-left:1.1em;font-size:.88rem;line-height:1.6}
-.slide button{margin-top:12px;border:0;border-radius:999px;background:#fff;color:#6a1b4d;font:inherit;font-weight:700;font-size:.82rem;padding:7px 14px}
+.slide button{margin-top:12px;border:0;border-radius:999px;background:#fff;color:var(--deep);font:inherit;font-weight:700;font-size:.82rem;padding:7px 14px}
 .slide.cover .body{inset:0;display:flex;flex-direction:column;justify-content:center;align-items:flex-start}
 .slide.cover .big{font-size:2.6rem;font-weight:800;line-height:1}
 .slide.cover .flags{font-size:1.1rem;line-height:1.9;margin-top:10px}
@@ -103,6 +105,13 @@ svg.spark{width:100%;height:46px;margin-top:6px}
 .tile .sub b{color:var(--text)}
 .tile .rk{display:inline-block;background:var(--chip);color:var(--accent);border-radius:6px;padding:1px 6px;font-size:.72rem;font-weight:700;margin-top:6px}
 .tile svg.spark{height:34px}
+.ev{display:flex;gap:12px;align-items:flex-start}
+.ev.past{opacity:.55}
+.evd{flex:none;width:56px;text-align:center;background:var(--chip);color:var(--accent);border-radius:10px;padding:8px 0;line-height:1.2}
+.evd b{display:block;font-size:1.1rem}
+.evd small{font-size:.72rem}
+.evb{flex:1;min-width:0}
+.evlink{display:inline-block;margin-top:8px;color:var(--accent);font-weight:700;font-size:.82rem;text-decoration:none}
 .cbar{display:grid;grid-template-columns:9.6em 1fr 3.2em;gap:8px;align-items:center;margin-top:8px;font-size:.82rem}
 .cbar .cn{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cbar .ct{display:block;height:12px}
@@ -127,22 +136,32 @@ svg.spark{width:100%;height:46px;margin-top:6px}
 </head>
 <body>
 <header>
-  <h1>中島健人 ニュース</h1>
+  <h1>中島 健人 まとめニュース</h1>
   <div class="updated" id="updated">読み込み中…</div>
   <nav class="tabs" role="tablist">
-    <button role="tab" aria-selected="true" data-tab="news">ニュース</button>
+    <button role="tab" aria-selected="true" data-tab="home">ホーム</button>
+    <button role="tab" aria-selected="false" data-tab="domestic">国内</button>
+    <button role="tab" aria-selected="false" data-tab="abroad">海外</button>
+    <button role="tab" aria-selected="false" data-tab="events">イベント</button>
     <button role="tab" aria-selected="false" data-tab="fanclub">FC会員数</button>
   </nav>
 </header>
 <main>
-  <section id="news">
+  <section id="home" data-section>
     <div id="dash"></div>
     <div id="digest"></div>
-    <h2 class="sec">すべての記事</h2>
-    <div class="filters" id="filters"></div>
-    <div id="list"></div>
   </section>
-  <section id="fanclub" hidden></section>
+  <section id="domestic" data-section hidden>
+    <h2 class="sec">🇯🇵 国内ニュース</h2>
+    <div id="list-domestic"></div>
+  </section>
+  <section id="abroad" data-section hidden>
+    <h2 class="sec">🌏 海外ニュース</h2>
+    <div class="filters" id="filters"></div>
+    <div id="list-abroad"></div>
+  </section>
+  <section id="events" data-section hidden></section>
+  <section id="fanclub" data-section hidden></section>
 </main>
 <script>
 const LANG = {all: "すべて", ja: "日本", ko: "韓国", zh: "台湾・香港", th: "タイ", vi: "ベトナム",
@@ -189,19 +208,17 @@ function renderDash() {
   const last = k => (g[k] || []).at(-1);
   // FC：会員番号（ファン・本人の報告）を主に、サイトの推計を添える
   const mno = last("member_no"), fc = fcLatest(g);
-  const fcRank = rankOf(fcLatest, DASH_NAME);
   const fcTile = `<div class="tile"><div class="lb">🎫 ファンクラブ</div>
     ${mno ? `<div class="vv">${short(mno.value)}<small>番台</small></div><div class="sub">会員番号ベース（${esc(mno.date)}）</div>`
       : fc ? `<div class="vv">${short(fc.value)}<small>人</small></div>` : `<div class="vv">—</div>`}
     ${fc ? `<div class="sub">${fc.press ? "推計" : "公式"} <b>${short(fc.value)}人</b>（${esc(fc.date)}）</div>` : ""}
-    ${fcRank ? `<span class="rk">STARTO内 ${fcRank.no}位 / ${fcRank.of}</span>` : ""}</div>`;
+</div>`;
   // YouTube
   const yt = g.youtube || [], ytl = yt.at(-1), ytp = yt.at(-2);
-  const ytRank = rankOf(ytLatest, DASH_NAME);
   const ytTile = `<div class="tile"><div class="lb">▶️ YouTube 登録者</div>
     ${ytl ? `<div class="vv">${short(ytl.value)}<small>人</small></div>
       <div class="sub">${ytp && ytl.value !== ytp.value ? `<span class="${ytl.value > ytp.value ? "up" : "down"}">${ytl.value > ytp.value ? "+" : ""}${num(ytl.value - ytp.value)}</span>（前日比）` : `${esc(ytl.date)} 時点`}</div>
-      ${spark(yt)}${ytRank ? `<span class="rk">STARTO内 ${ytRank.no}位 / ${ytRank.of}</span>` : ""}`
+      ${spark(yt)}`
       : `<div class="vv">—</div><div class="sub">次回の更新から記録します</div>`}</div>`;
   // ニュース量
   const now = Date.now(), within = (n, days) => n.published && now - new Date(n.published) < days * 864e5;
@@ -247,7 +264,7 @@ async function renderPush(subText) {
   let sub = null;
   try { sub = await (await navigator.serviceWorker.ready).pushManager.getSubscription(); } catch (_) {}
   if (sub && subText === undefined) {
-    el.innerHTML = head + `<div class="sub">通知はオンです。新しい話題や、登録者・会員数の区切り、順位の変化をお知らせします。</div>
+    el.innerHTML = head + `<div class="sub">通知はオンです。新しい話題・イベントや、登録者・会員数の区切りをお知らせします。</div>
       <button class="pbtn ghost" data-push="show">登録用の文字列をもう一度表示</button>`;
     return;
   }
@@ -258,7 +275,7 @@ async function renderPush(subText) {
       <button class="pbtn" data-push="copy">コピー</button>`;
     return;
   }
-  el.innerHTML = head + `<div class="sub">新しい話題が出たときや、YouTube 登録者・会員数が1万人の区切りを超えたとき、順位が変わったときにお知らせします（1日1通まで）。</div>
+  el.innerHTML = head + `<div class="sub">新しい話題が出たときや、YouTube 登録者・会員数が1万人の区切りを超えたとき、新しいイベントが見つかったときにお知らせします（3時間おきの更新ごとに最大1通）。</div>
     <button class="pbtn" data-push="on">通知をオンにする</button>`;
 }
 
@@ -292,7 +309,7 @@ function renderSlides(d) {
   const slides = top.map((t, i) => {
     const img = (t.articles.find(a => a.image) || {}).image;
     return `<div class="slide">
-      ${img ? `<img src="${esc(img)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : ""}
+      <img src="${esc(img || "icon-512.png")}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.src='icon-512.png'">
       <div class="shade"></div>
       <div class="body"><span class="badge">${t.region === "国内" ? "🇯🇵 国内" : "🌏 海外"}　${i + 1} / ${top.length}</span>
         <h3>${esc(t.title)}</h3>
@@ -331,15 +348,7 @@ function renderDigest() {
   }).join("") + `<p class="note">見出しをもとに AI がまとめています（${esc(d.generated)} 作成）。詳しくは各記事をご覧ください。</p>`;
 }
 
-function renderNews() {
-  renderDash();
-  renderDigest();
-  syncDots();
-  const present = new Set(data.news.map(n => n.lang));
-  document.getElementById("filters").innerHTML = Object.entries(LANG).filter(([k]) => k === "all" || present.has(k)).map(([k, v]) =>
-    `<button data-f="${k}" class="${k === filter ? "on" : ""}">${v}</button>`).join("");
-  const items = data.news.filter(n => filter === "all" || n.lang === filter);
-  document.getElementById("list").innerHTML = (filter !== "ja" ? SAFARI_TIP : "") + (items.length ? items.map(n => `
+const newsCard = n => `
     <div class="card news">
       ${listThumb(n)}
       <a class="cover" href="${esc(n.link)}" target="_blank" rel="noopener"><div class="t">${esc(n.title)}</div></a>
@@ -347,7 +356,47 @@ function renderNews() {
       <div class="meta">${n.lang !== "ja" ? `<span class="chip">${FLAG[n.lang] || ""} ${LANG[n.lang] || n.lang}</span>` : ""}
         <span>${esc(n.source)}</span><span>${fmtDate(n.published)}</span>
         ${translateUrl(n) ? `<a class="tr" href="${esc(translateUrl(n))}" target="_blank" rel="noopener">Google翻訳で開く</a>` : ""}</div>
-    </div>`).join("") : `<div class="empty">ニュースはまだありません</div>`);
+    </div>`;
+
+function renderNews() {
+  renderDash();
+  renderDigest();
+  syncDots();
+  const domestic = data.news.filter(n => n.lang === "ja");
+  document.getElementById("list-domestic").innerHTML =
+    domestic.length ? domestic.map(newsCard).join("") : `<div class="empty">ニュースはまだありません</div>`;
+  const abroad = data.news.filter(n => n.lang !== "ja");
+  const counts = {};
+  abroad.forEach(n => counts[n.lang] = (counts[n.lang] || 0) + 1);
+  document.getElementById("filters").innerHTML = [["all", abroad.length], ...Object.entries(counts).sort((a, b) => b[1] - a[1])]
+    .map(([k, c]) => `<button data-f="${k}" class="${k === filter ? "on" : ""}">${k === "all" ? "すべて" : (FLAG[k] || "") + " " + (LANG[k] || k)} ${c}</button>`).join("");
+  const items = abroad.filter(n => filter === "all" || n.lang === filter);
+  document.getElementById("list-abroad").innerHTML = SAFARI_TIP +
+    (items.length ? items.map(newsCard).join("") : `<div class="empty">海外のニュースはまだありません</div>`);
+}
+
+// ---- イベント
+const KIND_ICON = {ライブ: "🎤", イベント: "🎉", 出演: "📺", オフ会: "🤝", その他: "📌"};
+let evFilter = "all";
+function renderEvents() {
+  const all = data.events || [];
+  const today = new Date().toISOString().slice(0, 10);
+  const kinds = ["all", ...Object.keys(KIND_ICON).filter(k => all.some(e => e.kind === k))];
+  const items = all.filter(e => evFilter === "all" || e.kind === evFilter);
+  const card = e => {
+    const past = e.date && e.date < today;
+    const d = e.date ? new Date(e.date + "T00:00:00") : null;
+    return `<div class="card ev${past ? " past" : ""}">
+      <div class="evd">${d ? `<b>${d.getMonth() + 1}/${d.getDate()}</b><small>${"日月火水木金土"[d.getDay()]}</small>` : `<small>日付<br>未定</small>`}</div>
+      <div class="evb"><div class="t">${KIND_ICON[e.kind] || "📌"} ${esc(e.title)}</div>
+        <div class="meta">${e.region === "海外" ? `<span class="chip">🌏 海外</span>` : ""}${e.place ? `<span>📍 ${esc(e.place)}</span>` : ""}
+          ${e.date_text ? `<span>${esc(e.date_text)}</span>` : ""}${past ? `<span>終了</span>` : ""}</div>
+        <a class="evlink" href="${esc(e.url)}" target="_blank" rel="noopener">情報元を見る ›</a></div></div>`;
+  };
+  document.getElementById("events").innerHTML = `<h2 class="sec">🎤 イベント情報</h2>
+    <div class="filters">${kinds.map(k => `<button data-ev="${k}" class="${k === evFilter ? "on" : ""}">${k === "all" ? "すべて" : KIND_ICON[k] + " " + k}</button>`).join("")}</div>
+    ${items.length ? items.map(card).join("") : `<div class="empty">まだイベント情報はありません<br>ニュースや公式のお知らせから自動で集めます</div>`}
+    <p class="note">ライブ・イベント・出演・オフ会の予定を、ニュースや公式のお知らせから AI が読み取っています。日時や場所は必ず情報元で確かめてください。</p>`;
 }
 
 function spark(points) {
@@ -436,8 +485,7 @@ document.addEventListener("click", e => {
   const tab = e.target.closest("[data-tab]");
   if (tab) {
     document.querySelectorAll("[data-tab]").forEach(b => b.setAttribute("aria-selected", b === tab));
-    document.getElementById("news").hidden = tab.dataset.tab !== "news";
-    document.getElementById("fanclub").hidden = tab.dataset.tab !== "fanclub";
+    document.querySelectorAll("[data-section]").forEach(sec => sec.hidden = sec.id !== tab.dataset.tab);
     window.scrollTo(0, 0);
   }
   const pb = e.target.closest("[data-push]");
@@ -460,6 +508,8 @@ document.addEventListener("click", e => {
   }
   const rk = e.target.closest("[data-rank]");
   if (rk) { rankBy = rk.dataset.rank; renderFanclub(); }
+  const evb = e.target.closest("[data-ev]");
+  if (evb) { evFilter = evb.dataset.ev; renderEvents(); }
   const f = e.target.closest("[data-f]");
   if (f) { filter = f.dataset.f; renderNews(); }
 });
@@ -467,10 +517,10 @@ document.addEventListener("click", e => {
 fetch("data.json", {cache: "no-store"}).then(r => r.json()).then(d => {
   data = d;
   document.getElementById("updated").textContent = `最終更新: ${d.updated}`;
-  renderNews(); renderFanclub();
+  renderNews(); renderEvents(); renderFanclub();
 }).catch(() => {
   document.getElementById("updated").textContent = "データを読み込めませんでした";
-  renderNews(); renderFanclub();
+  renderNews(); renderEvents(); renderFanclub();
 });
 
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js");

@@ -6,10 +6,21 @@
     "new_topics": true,
     "youtube_step": 10000,
     "fc_step": 10000,
-    "rank_change": true,
+    "rank_change": false,
     "max_lines": 4,
-    "note": "通知のしきい値。youtube_step / fc_step は何人ごとの区切りで知らせるか（10000 = 1万人ごと）"
+    "note": "通知のしきい値。youtube_step / fc_step は何人ごとの区切りで知らせるか（10000 = 1万人ごと）",
+    "new_events": true
   },
+  "event_pages": [
+    {
+      "url": "https://www.sonymusic.co.jp/artist/KentoNakajima/info/",
+      "note": "公式（ソニーミュージック）のお知らせ。ライブ・イベント・出演情報"
+    },
+    {
+      "url": "https://twipla.jp/search?keyword=%E4%B8%AD%E5%B3%B6%E5%81%A5%E4%BA%BA",
+      "note": "ツイプラ（ファンのオフ会・イベント告知）"
+    }
+  ],
   "watch_pages": [
     {
       "url": "https://snowman-information.com/johnnys-fc/",

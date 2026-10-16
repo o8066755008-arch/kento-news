@@ -4,6 +4,7 @@
   - new_topics     : ここ3日間のトピックに新しい話題が増えたら知らせる
   - youtube_step   : 中島健人の YouTube 登録者がこの人数の区切りを超えたら知らせる（例: 10000 → 26万人突破）
   - fc_step        : FC 会員数（推計）・会員番号がこの区切りを超えたら知らせる
+  - new_events     : 新しいイベント（ライブ・出演・オフ会など）が見つかったら知らせる
   - rank_change    : FC・YouTube の STARTO 内の順位が変わったら知らせる
 1回の実行で送る通知は1通だけ（変化をまとめて書く）。初回は今の状態を覚えるだけで送らない。
 
@@ -13,6 +14,7 @@
 """
 import json
 import os
+import time
 import sys
 from pathlib import Path
 
@@ -54,8 +56,15 @@ def current_state(conn, groups: list[dict]) -> dict:
     me = vals.get(NAME, {})
     row = conn.execute("SELECT value FROM watch_state WHERE key = 'digest'").fetchone()
     topics = [f"{t['region']}|{t['title']}" for t in json.loads(row[0])["topics"]] if row else []
+    today = time.strftime("%Y-%m-%d")
+    try:
+        events = [f"{eid}|{dt or '日付未定'} {title}" for eid, dt, title in conn.execute(
+            "SELECT id, date_text, title FROM events WHERE date = '' OR date >= ?", (today,))]
+    except Exception:  # まだイベントの表がない
+        events = []
     return {
         "topics": topics,
+        "events": events,
         "youtube": me.get("youtube"),
         "fc": fc_value(me),
         "member_no": me.get("member_no"),
@@ -82,6 +91,12 @@ def changes(prev: dict, cur: dict, rules: dict) -> list[str]:
             if t not in prev.get("topics", []):
                 region, title = t.split("|", 1)
                 lines.append(f"{'🇯🇵' if region == '国内' else '🌏'} {title}")
+    if rules.get("new_events", True):
+        known = {e.split("|", 1)[0] for e in prev.get("events", [])}
+        for e in cur.get("events", []):
+            eid, label = e.split("|", 1)
+            if eid not in known:
+                lines.append(f"🎤 {label}")
     if (v := crossed(prev.get("youtube"), cur["youtube"], rules.get("youtube_step", 10000))):
         lines.append(f"▶️ YouTube 登録者が {man(v)}人を突破")
     if (v := crossed(prev.get("fc"), cur["fc"], rules.get("fc_step", 10000))):
