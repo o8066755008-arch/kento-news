@@ -25,8 +25,8 @@ jobs:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.13"
       - run: pip install anthropic
@@ -43,6 +43,8 @@ jobs:
           git config user.email "github-actions@users.noreply.github.com"
           git add data.db site/data.json last_run.log
           git commit -m "データ更新 $(date +%F)" || echo "変更なし"
+          # 実行中にコードが更新されていても保存できるよう、最新に重ねてから送る（データはこの実行の内容を優先）
+          git pull --rebase -X theirs origin main
           git push
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
