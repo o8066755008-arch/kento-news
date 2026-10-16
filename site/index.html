@@ -7,7 +7,7 @@
 <title>中島健人 ニュース</title>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon.svg">
-<link rel="apple-touch-icon" href="icon.svg">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <style>
 :root{--bg:#fbf8f9;--card:#fff;--text:#1f1a1c;--sub:#76696e;--line:#eee4e8;--accent:#c2185b;--chip:#fbe6ee}
 @media (prefers-color-scheme:dark){:root{--bg:#141012;--card:#1e191b;--text:#f3edef;--sub:#a99ca1;--line:#2e2629;--accent:#f06292;--chip:#3a2230}}
@@ -102,7 +102,11 @@ svg.spark{width:100%;height:46px;margin-top:6px}
 .tile .sub b{color:var(--text)}
 .tile .rk{display:inline-block;background:var(--chip);color:var(--accent);border-radius:6px;padding:1px 6px;font-size:.72rem;font-weight:700;margin-top:6px}
 .tile svg.spark{height:34px}
-.tile .cty{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;font-size:.85rem}
+.cbar{display:grid;grid-template-columns:9.6em 1fr 3.2em;gap:8px;align-items:center;margin-top:8px;font-size:.82rem}
+.cbar .cn{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cbar .ct{display:block;height:12px}
+.cbar .cf{display:block;height:100%;background:var(--accent);border-radius:0 4px 4px 0}
+.cbar .cv{text-align:right;color:var(--sub);font-variant-numeric:tabular-nums}
 .pbtn{margin-top:8px;border:0;border-radius:999px;background:var(--accent);color:#fff;font:inherit;font-weight:700;font-size:.85rem;padding:8px 16px}
 .pbtn.ghost{background:var(--chip);color:var(--accent)}
 .tile textarea{width:100%;margin-top:8px;font-size:.7rem;border:1px solid var(--line);border-radius:8px;padding:8px;background:var(--bg);color:var(--text)}
@@ -204,15 +208,21 @@ function renderDash() {
   const abroad30 = d30.filter(n => n.lang !== "ja");
   const newsTile = `<div class="tile"><div class="lb">📰 ニュース</div>
     <div class="vv">${d3.length}<small>件</small></div><div class="sub">ここ3日間（30日間で <b>${d30.length}件</b>）</div></div>`;
-  // 海外での話題（30日間の国別）
+  // 海外での話題：30日間の国・地域別の記事数（どこで話題になっているかの目安）
   const byLang = {};
   abroad30.forEach(n => byLang[n.lang] = (byLang[n.lang] || 0) + 1);
-  const top = Object.entries(byLang).sort((a, b) => b[1] - a[1]).slice(0, 4);
-  const abroadTile = `<div class="tile"><div class="lb">🌏 海外での話題</div>
-    <div class="vv">${d30.length ? Math.round(abroad30.length / d30.length * 100) : 0}<small>%</small></div>
-    <div class="sub">30日間の記事のうち海外メディア</div>
-    <div class="cty">${top.map(([l, c]) => `<span>${FLAG[l] || ""} ${c}</span>`).join("")}</div></div>`;
-  el.innerHTML = `<h2 class="sec">${DASH_NAME} ダッシュボード</h2><div class="dash">${fcTile}${ytTile}${newsTile}${abroadTile}
+  const ranked = Object.entries(byLang).sort((a, b) => b[1] - a[1]);
+  const abroadTile = `<div class="tile"><div class="lb">🌏 海外ニュース</div>
+    <div class="vv">${abroad30.length}<small>件</small></div>
+    <div class="sub">30日間・<b>${ranked.length}</b>の国と地域</div></div>`;
+  const maxC = ranked.length ? ranked[0][1] : 1;
+  const countryTile = ranked.length ? `<div class="tile wide"><div class="lb">📊 国・地域別のニュース数（30日間）</div>
+    ${ranked.map(([l, c], i) => `<div class="cbar" title="${esc(LANG[l] || l)}：${c}件">
+      <span class="cn">${i + 1}. ${FLAG[l] || ""} ${esc(LANG[l] || l)}</span>
+      <span class="ct"><span class="cf" style="width:${Math.max(3, c / maxC * 100)}%"></span></span>
+      <span class="cv">${c}件</span></div>`).join("")}
+    <div class="sub">記事の言語・配信地域で数えています（台湾・香港は中国語、英語圏はアメリカ・シンガポール・フィリピンなど）。日本のメディアは ${d30.length - abroad30.length}件。</div></div>` : "";
+  el.innerHTML = `<h2 class="sec">${DASH_NAME} ダッシュボード</h2><div class="dash">${fcTile}${ytTile}${newsTile}${abroadTile}${countryTile}
     <div class="tile wide" id="push"></div></div>`;
   renderPush();
 }

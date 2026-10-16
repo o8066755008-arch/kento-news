@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="38%" r="75%">
+      <stop offset="0" stop-color="#8e1846"/>
+      <stop offset=".55" stop-color="#4a0f2b"/>
+      <stop offset="1" stop-color="#16070e"/>
+    </radialGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff1c2"/>
+      <stop offset=".5" stop-color="#f1c35a"/>
+      <stop offset="1" stop-color="#b9831f"/>
+    </linearGradient>
+    <linearGradient id="pink" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffd1e3"/>
+      <stop offset="1" stop-color="#ff5c9a"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#bg)"/><g transform="translate(256 256) scale(.78) translate(-256 -256)">
+  <!-- 鬼の角（左右） -->
+  <path d="M178 196 C 168 150, 150 118, 120 96 C 158 104, 196 136, 214 186 Z" fill="url(#gold)"/>
+  <path d="M334 196 C 344 150, 362 118, 392 96 C 354 104, 316 136, 298 186 Z" fill="url(#gold)"/>
+  <!-- K -->
+  <path d="M176 182 h52 v84 l78 -84 h66 l-90 94 l96 120 h-66 l-70 -90 l-14 15 v75 h-52 z" fill="url(#pink)"/>
+  <!-- きらめき -->
+  <path d="M392 236 l9 24 l24 9 l-24 9 l-9 24 l-9 -24 l-24 -9 l24 -9 z" fill="#fff" opacity=".95"/>
+  <path d="M132 318 l6 15 l15 6 l-15 6 l-6 15 l-6 -15 l-15 -6 l15 -6 z" fill="#fff" opacity=".8"/>
+  <text x="256" y="452" text-anchor="middle" font-family="Helvetica Neue, Arial, sans-serif" font-weight="800" font-size="50" letter-spacing="10" fill="#fff" opacity=".92">KENTY</text>
+
+</g></svg>
