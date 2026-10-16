@@ -227,6 +227,19 @@ class CrawlerTest(unittest.TestCase):
         self.assertEqual(self.conn.execute("SELECT url, tier, source_label FROM events").fetchall(),
                          [("starto", 1, "公式")])
 
+    def test_duplicate_events_merged(self):
+        events.open_events(self.conn)
+        from datetime import date, timedelta
+        day = (date.today() + timedelta(days=9)).isoformat()
+        e = lambda t, d: {"title": t, "kind": "出演", "date": d, "date_text": "", "place": "",
+                          "region": "国内", "year_certain": True, "source_id": 0}
+        src = [{"url": "u", "source": "s"}]
+        self.assertEqual(events.save_events(self.conn, [e("第39回東京国際映画祭（ナビゲーター）", "")], src), 1)
+        self.assertEqual(events.save_events(self.conn, [e("第39回東京国際映画祭 フェスティバル・ナビゲーター", day)], src), 0)
+        self.assertEqual(self.conn.execute("SELECT date FROM events").fetchall(), [(day,)])
+        self.assertEqual(events.save_events(self.conn, [e("IDOL1ST KENTY ASIA TOUR 台北公演", day)], src), 1)
+        self.assertEqual(events.save_events(self.conn, [e("中島健人 台北ソロコンサート", day)], src), 1)  # 共通語なしは別扱い
+
     def test_notify_new_event(self):
         prev = {"topics": [], "events": ["a|11/3 ライブ"], "youtube": None, "fc": None, "member_no": None,
                 "fc_rank": None, "yt_rank": None}

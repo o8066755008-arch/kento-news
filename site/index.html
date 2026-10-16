@@ -413,7 +413,7 @@ function renderNews() {
 }
 
 // ---- イベント
-const KIND_ICON = {ライブ: "🎤", イベント: "🎉", 出演: "📺", オフ会: "🤝", その他: "📌"};
+const KIND_ICON = {ライブ: "🎤", イベント: "🎉", 出演: "📺", "発売・配信": "💿", オフ会: "🤝", その他: "📌"};
 let evFilter = "all";
 const localToday = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
 // これからの予定（日付順・同じ日なら信頼度の高い情報源が先）と、終わった予定に分ける

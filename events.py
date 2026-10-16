@@ -28,7 +28,7 @@ EVENT_WORDS = re.compile(
     r"콘서트|투어|팬미팅|공연|내한|演唱會|巡演|見面會|粉絲見面|簽名會|คอนเสิร์ต|แฟนมีต",
     re.IGNORECASE)
 
-VERSION = 3  # 読み取り方を変えたら上げる（それまでのイベントを消して読み直す）
+VERSION = 4  # 読み取り方を変えたら上げる（それまでのイベントを消して読み直す）
 
 # イベントを探すためのニュース検索（Google ニュース）: (検索語, hl, gl, ceid)
 EVENT_QUERIES = [
@@ -44,9 +44,10 @@ EVENT_QUERIES = [
 SYSTEM = (
     "あなたは中島健人さんのファン向けのイベント情報担当です。渡されたテキストから、"
     "中島健人さんが出る（またはファンが集まる）具体的な予定を抜き出してください。\n"
-    "- kind は「ライブ」「イベント」「出演」「オフ会」「その他」のどれかにします。"
+    "- kind は「ライブ」「イベント」「出演」「発売・配信」「オフ会」「その他」のどれかにします。"
     "ライブ・コンサート・ツアーは「ライブ」、ファンミーティング・舞台挨拶・サイン会・展示などは「イベント」、"
-    "テレビ・映画祭・番組などへの出演は「出演」、ファンが主催する集まりは「オフ会」です。\n"
+    "テレビ・映画祭・番組などへの出演は「出演」、CD・Blu-ray・DVD・グッズの発売や配信の開始は「発売・配信」、"
+    "ファンが主催する集まりは「オフ会」です。\n"
     "- title は日本語で30字以内。place は会場や都市（日本語、わからなければ空文字）。\n"
     "- 各項目には記事の日付（published）が付いています。予定の年が書かれていないときは、"
     "その記事の日付から見て次に来る日付として年を補ってください（記事が10月で「4月6日」とあれば、"
@@ -71,7 +72,7 @@ SCHEMA = {
                 "type": "object",
                 "properties": {
                     "title": {"type": "string"},
-                    "kind": {"type": "string", "enum": ["ライブ", "イベント", "出演", "オフ会", "その他"]},
+                    "kind": {"type": "string", "enum": ["ライブ", "イベント", "出演", "発売・配信", "オフ会", "その他"]},
                     "date": {"type": "string"},
                     "date_text": {"type": "string"},
                     "place": {"type": "string"},
@@ -118,21 +119,38 @@ def norm(title: str) -> str:
     return re.sub(r"[\s\W_]+", "", title).lower()
 
 
-def same_event(conn, title: str, day: str):
-    """同じ日付で見出しが似ている予定を探す（別の情報源に同じ予定が載っていることが多いため）。"""
-    import difflib
-    if not day:
-        return None
-    for eid, other, tier in conn.execute("SELECT id, title, tier FROM events WHERE date = ?", (day,)):
-        a, b = norm(title), norm(other)
-        if a in b or b in a or difflib.SequenceMatcher(None, a, b).ratio() >= 0.55:
-            return eid, tier
-    return None
-
-
 def event_id(title: str, day: str) -> str:
     key = re.sub(r"[\s\W_]+", "", title).lower()[:20] + "|" + day
     return hashlib.sha1(key.encode()).hexdigest()[:16]
+
+
+def similar(a: str, b: str) -> bool:
+    import difflib
+    a, b = norm(a), norm(b)
+    if not a or not b:
+        return False
+    if a in b or b in a:
+        return True
+    if difflib.SequenceMatcher(None, a, b).ratio() >= 0.5:
+        return True
+    # 「台北公演」と「台北ソロコンサート」のように、固有の言葉（3文字以上の共通部分）が重なるか
+    m = difflib.SequenceMatcher(None, a, b).find_longest_match(0, len(a), 0, len(b))
+    return m.size >= 4
+
+
+def same_event(conn, title: str, day: str):
+    """同じ予定を探す（別の情報源に同じ予定が載っていることが多いため）。
+
+    日付があれば同じ日付の予定と、日付がなければすべての予定と見出しを比べる。
+    """
+    if day:
+        rows = conn.execute("SELECT id, title, tier, date FROM events WHERE date = ? OR date = ''", (day,))
+    else:
+        rows = conn.execute("SELECT id, title, tier, date FROM events")
+    for eid, other, tier, other_day in rows:
+        if similar(title, other):
+            return eid, tier, other_day
+    return None
 
 
 def save_events(conn, events: list[dict], sources: list[dict]) -> int:
@@ -157,7 +175,8 @@ def save_events(conn, events: list[dict], sources: list[dict]) -> int:
                   src["url"], src["source"], tier, src.get("label", "ニュース"), int(e.get("year_certain", True)))
         dup = same_event(conn, e["title"], day)
         if dup:
-            if tier < (dup[1] or NEWS_TIER):
+            # 日付のない方を、日付のある同じ予定で置き換える
+            if (tier < (dup[1] or NEWS_TIER) and (day or not dup[2])) or (day and not dup[2]):
                 conn.execute("UPDATE events SET title=?, kind=?, date=?, date_text=?, place=?, region=?, url=?, "
                              "source=?, tier=?, source_label=?, year_certain=? WHERE id = ?", values + (dup[0],))
             continue
