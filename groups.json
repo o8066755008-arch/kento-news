@@ -3,21 +3,13 @@
   "fan_form_csv_url": "https://docs.google.com/spreadsheets/d/1gFxL2t1PqH_9gFx0bqVlxn3UrpatZ62MEnOxxO9sR8o/export?format=csv",
   "watch_pages": [
     {
-      "url": "https://snowman-information.com/johnnys-fc/",
-      "primary": true,
-      "note": "月次更新の一覧。ランキングはこのサイトの数字で定点観測する"
-    },
-    {
       "url": "https://report-newage.com/18785",
-      "note": "比較用"
+      "primary": true,
+      "note": "全グループのランキング。ランキングはこのサイトの数字で定点観測する"
     },
     {
-      "url": "https://ticketcircle.jp/media/live/539",
-      "note": "比較用"
-    },
-    {
-      "url": "https://ticketcircle.jp/media/live/551",
-      "note": "比較用（SixTONES の推移）"
+      "url": "https://snowman-information.com/johnnys-fc/",
+      "note": "比較用（月次更新）。いまは数字を読み取れていない"
     }
   ],
   "groups": [

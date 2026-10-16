@@ -106,6 +106,10 @@ class CrawlerTest(unittest.TestCase):
         self.assertEqual(it["image"], "https://www.bing.com/th?id=OVFT.abc&pid=News")
         self.assertEqual(it["source"], "예시뉴스")
 
+    def test_bing_with_bare_ampersand_in_namespace(self):
+        broken = BING.replace(b'?q=x&amp;format=rss', b'?q=x&format=rss')
+        self.assertEqual(len(crawler.parse_bing_rss(broken, "ko")), 1)
+
     def test_same_headline_from_two_sources_is_saved_once_with_image(self):
         google = crawler.parse_rss(SAMPLE, "ko")   # 「테스트 제목」画像なし
         self.assertEqual(crawler.save(self.conn, google), 1)

@@ -37,11 +37,11 @@ def allowed(url: str) -> bool:
     return _robots[base].can_fetch(USER_AGENT, url)
 
 
-def read_head(url: str) -> tuple[str, str]:
+def read_head(url: str, max_bytes: int = MAX_BYTES) -> tuple[str, str]:
     """ページの先頭を読み、(最終的な URL, HTML) を返す。"""
     req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT, "Accept-Language": "ja,en;q=0.8"})
     with urllib.request.urlopen(req, timeout=15) as res:
-        return res.geturl(), res.read(MAX_BYTES).decode("utf-8", errors="replace")
+        return res.geturl(), res.read(max_bytes).decode("utf-8", errors="replace")
 
 
 def decode_google_news(link: str) -> str | None:

@@ -93,6 +93,8 @@ def bing_url(query: str, market: str) -> str:
 
 
 def parse_bing_rss(xml_bytes: bytes, lang: str) -> list[dict]:
+    # Bing の RSS は名前空間の URL に「&」がそのまま入ることがあり、XML として壊れているので直す
+    xml_bytes = re.sub(rb"&(?!#?\w+;)", b"&amp;", xml_bytes)
     root = ET.fromstring(xml_bytes)
     items = []
     for item in root.iter("item"):

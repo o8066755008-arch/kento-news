@@ -196,11 +196,16 @@ def crawl_pages(conn, groups: list[dict], pages: list[dict]) -> None:
     names = [g["name"] for g in groups]
     for page in pages:
         url = page["url"]
+        if page.get("primary"):
+            # 比較用として記録していたサイトを定点観測に切り替えたときは、比較用の記録を消す
+            conn.execute("DELETE FROM metrics WHERE metric = ?",
+                         ("site:" + urllib.parse.urlparse(url).netloc,))
+            conn.commit()
         if not thumbnails.allowed(url):
             print(f"[ページ] {url} は robots.txt で禁止されているため読みません")
             continue
         try:
-            _, raw = thumbnails.read_head(url)
+            _, raw = thumbnails.read_head(url, max_bytes=3_000_000)  # まとめページは長いので全体を読む
         except Exception as e:
             print(f"[ページ] {url} の取得に失敗しました: {e}", file=sys.stderr)
             continue
@@ -209,7 +214,8 @@ def crawl_pages(conn, groups: list[dict], pages: list[dict]) -> None:
         if not snippet:
             print(f"[ページ] {url} に会員数の記述が見つかりません")
             continue
-        if get_state(conn, "page2:" + url) == digest:
+        state_key = f"page:{site_metric(page)}:{url}"
+        if get_state(conn, state_key) == digest:
             print(f"[ページ] {url} は前回から変化がありません")
             continue
         result = translate.ask_json(EXTRACT_SYSTEM + PAGE_NOTE, snippet[:20000], extract_schema(names))
@@ -219,7 +225,11 @@ def crawl_pages(conn, groups: list[dict], pages: list[dict]) -> None:
             it["kind"] = site_metric(page)  # まとめサイトの数字は公式扱いにしない
         n = save_official(conn, result["items"], url, date.today().isoformat())
         print(f"[ページ] {url} から {n} 件を記録しました")
-        set_state(conn, "page2:" + url, digest)
+        if n:
+            set_state(conn, state_key, digest)
+        else:
+            # 読み取れなかったときは原因を調べられるよう、AI に渡した部分の先頭を残す（次回もう一度読む）
+            print(f"[ページ] 読み取り対象（{len(snippet)} 文字）の先頭: {snippet[:400]!r}")
 
 
 def crawl_wikipedia(conn, groups: list[dict]) -> None:
