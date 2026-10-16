@@ -26,6 +26,8 @@ jobs:
       url: ${{ steps.deploy.outputs.page_url }}
     steps:
       - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0   # 保存前に最新へ重ねるため履歴をすべて取る
       - uses: actions/setup-python@v6
         with:
           python-version: "3.13"
