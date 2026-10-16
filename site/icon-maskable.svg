@@ -1,29 +1,25 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <defs>
-    <radialGradient id="bg" cx="50%" cy="38%" r="75%">
-      <stop offset="0" stop-color="#8e1846"/>
-      <stop offset=".55" stop-color="#4a0f2b"/>
-      <stop offset="1" stop-color="#16070e"/>
+    <radialGradient id="bg" cx="50%" cy="45%" r="70%">
+      <stop offset="0" stop-color="#2b5c9e"/><stop offset=".6" stop-color="#132e5a"/><stop offset="1" stop-color="#070f22"/>
     </radialGradient>
-    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#fff1c2"/>
-      <stop offset=".5" stop-color="#f1c35a"/>
-      <stop offset="1" stop-color="#b9831f"/>
+    <linearGradient id="wing" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#9fc4ec"/>
     </linearGradient>
-    <linearGradient id="pink" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#ffd1e3"/>
-      <stop offset="1" stop-color="#ff5c9a"/>
-    </linearGradient>
+    <radialGradient id="eye" r=".5"><stop offset="0" stop-color="#e8fbff"/><stop offset=".4" stop-color="#5fd0ff"/><stop offset="1" stop-color="#5fd0ff" stop-opacity="0"/></radialGradient>
   </defs>
   <rect width="512" height="512" fill="url(#bg)"/><g transform="translate(256 256) scale(.78) translate(-256 -256)">
-  <!-- 鬼の角（左右） -->
-  <path d="M178 196 C 168 150, 150 118, 120 96 C 158 104, 196 136, 214 186 Z" fill="url(#gold)"/>
-  <path d="M334 196 C 344 150, 362 118, 392 96 C 354 104, 316 136, 298 186 Z" fill="url(#gold)"/>
+  <!-- 光の粒 -->
+  <g fill="#cfe8ff"><circle cx="90" cy="110" r="3"/><circle cx="420" cy="90" r="2.5"/><circle cx="440" cy="300" r="3"/><circle cx="70" cy="330" r="2.5"/><circle cx="380" cy="420" r="2"/></g>
+  <!-- 左右の翼 -->
+  <path d="M236 230 C 190 150, 120 120, 52 128 C 96 150, 112 176, 116 206 C 92 196, 70 196, 52 204 C 92 220, 116 246, 124 278 C 104 274, 86 278, 72 288 C 120 296, 176 300, 236 280 Z" fill="url(#wing)"/>
+  <path d="M276 230 C 322 150, 392 120, 460 128 C 416 150, 400 176, 396 206 C 420 196, 442 196, 460 204 C 420 220, 396 246, 388 278 C 408 274, 426 278, 440 288 C 392 296, 336 300, 276 280 Z" fill="url(#wing)"/>
   <!-- K -->
-  <path d="M176 182 h52 v84 l78 -84 h66 l-90 94 l96 120 h-66 l-70 -90 l-14 15 v75 h-52 z" fill="url(#pink)"/>
-  <!-- きらめき -->
-  <path d="M392 236 l9 24 l24 9 l-24 9 l-9 24 l-9 -24 l-24 -9 l24 -9 z" fill="#fff" opacity=".95"/>
-  <path d="M132 318 l6 15 l15 6 l-15 6 l-6 15 l-6 -15 l-15 -6 l15 -6 z" fill="#fff" opacity=".8"/>
-  <text x="256" y="452" text-anchor="middle" font-family="Helvetica Neue, Arial, sans-serif" font-weight="800" font-size="50" letter-spacing="10" fill="#fff" opacity=".92">KENTY</text>
+  <path d="M196 180 h44 v76 l70 -76 h56 l-78 84 l84 106 h-56 l-62 -80 l-14 14 v66 h-44 z" fill="#f4f9ff"/>
+  <!-- 青い光る目 -->
+  <circle cx="256" cy="148" r="34" fill="url(#eye)"/>
+  <path d="M232 148 q24 -14 48 0 q-24 14 -48 0 z" fill="#5fd0ff"/>
+  <circle cx="256" cy="148" r="6" fill="#0b2a52"/>
+  <text x="256" y="460" text-anchor="middle" font-family="Helvetica Neue, Arial, sans-serif" font-weight="800" font-size="46" letter-spacing="10" fill="#e8f3ff">KENTY</text>
 
 </g></svg>

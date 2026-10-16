@@ -3,8 +3,8 @@
   "short_name": "ケンティー",
   "start_url": "./",
   "display": "standalone",
-  "background_color": "#16070e",
-  "theme_color": "#c2185b",
+  "background_color": "#070f22",
+  "theme_color": "#132e5a",
   "lang": "ja",
   "icons": [
     {
