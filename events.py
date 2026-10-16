@@ -28,7 +28,7 @@ EVENT_WORDS = re.compile(
     r"콘서트|투어|팬미팅|공연|내한|演唱會|巡演|見面會|粉絲見面|簽名會|คอนเสิร์ต|แฟนมีต",
     re.IGNORECASE)
 
-VERSION = 4  # 読み取り方を変えたら上げる（それまでのイベントを消して読み直す）
+VERSION = 5  # 読み取り方を変えたら上げる（それまでのイベントを消して読み直す）
 
 # イベントを探すためのニュース検索（Google ニュース）: (検索語, hl, gl, ceid)
 EVENT_QUERIES = [
@@ -56,7 +56,10 @@ SYSTEM = (
     "- date は開催日（期間なら初日）を YYYY-MM-DD、日付がわからなければ空文字。"
     "date_text は「2026年11月3日〜5日」のように年も付けた日本語で書きます。"
     "year_certain は、年が本文に書かれている・記事の日付からはっきり決められるなら true、推測なら false。\n"
-    "- 番組表のページでは、中島健人さんが出る番組を1つずつ（放送日時・局つきで）入れます。\n"
+    "- 番組表のページでは、これから放送される番組だけを1つずつ（放送日時・局つきで）入れます。"
+    "過去の出演作の一覧や、放送日の書かれていない作品紹介は入れないでください。\n"
+    "- テキストに ［link: https://...］ の形でリンクが付いていれば、その予定の詳しいページのリンクを link に入れます"
+    "（番組・記事・公演ごとのページ。なければ空文字）。\n"
     "- region は日本国内なら「国内」、海外なら「海外」。\n"
     "- source_id には根拠になった項目の番号を入れます。\n"
     "- 予定ではない話題（過去の感想、インタビュー、ランキングなど）や、中島健人さんと関係ない予定は入れないでください。"
@@ -78,9 +81,10 @@ SCHEMA = {
                     "place": {"type": "string"},
                     "region": {"type": "string", "enum": ["国内", "海外"]},
                     "year_certain": {"type": "boolean"},
+                    "link": {"type": "string"},
                     "source_id": {"type": "integer"},
                 },
-                "required": ["title", "kind", "date", "date_text", "place", "region", "year_certain", "source_id"],
+                "required": ["title", "kind", "date", "date_text", "place", "region", "year_certain", "link", "source_id"],
                 "additionalProperties": False,
             },
         }
@@ -248,6 +252,21 @@ def from_news(conn, batch: int = 60, limit: int = 300) -> None:
     print(f"[イベント] 記事 {len(todo)} 件を確認 / 新しい予定 {total} 件")
 
 
+def with_links(raw_html: str, page_url: str) -> str:
+    """リンクの文字のうしろに ［link: URL］ を書き足す（AI が予定ごとの詳しいページを選べるように）。"""
+    import html as htmllib
+    import urllib.parse
+
+    def repl(m):
+        href = htmllib.unescape(m.group(1))
+        if href.startswith(("#", "javascript:", "mailto:")):
+            return m.group(0)
+        # 「<」「>」で囲むと本文を取り出すときにタグとして消えるので、［link: …］の形にする
+        return f"{m.group(2)} ［link: {urllib.parse.urljoin(page_url, href)}］</a>"
+    return re.sub(r'(?is)<a\s[^>]*href=["\']([^"\']+)["\'][^>]*>(.*?)</a>',
+                  lambda m: m.group(0)[:m.group(0).find(">") + 1] + repl(m), raw_html)
+
+
 def from_pages(conn, pages: list[dict]) -> None:
     """公式のお知らせやオフ会の告知ページを1日1回読む。"""
     import fanclub
@@ -266,7 +285,7 @@ def from_pages(conn, pages: list[dict]) -> None:
         except Exception as e:
             print(f"[イベント] {url} の取得に失敗しました: {e}", file=sys.stderr)
             continue
-        text = fanclub.page_text(raw)
+        text = fanclub.page_text(with_links(raw, url))
         # 日付らしいものを含む行と前後の行だけを AI に渡す
         lines = text.splitlines()
         keep = sorted({j for i, l in enumerate(lines)
@@ -280,11 +299,15 @@ def from_pages(conn, pages: list[dict]) -> None:
         result = translate.ask_json(SYSTEM, f"今日は {today} です。\n0. {snippet}", SCHEMA)
         if result is None:
             continue
-        for e in result["events"]:
-            e["source_id"] = 0
-        n = save_events(conn, result["events"],
-                        [{"url": url, "source": page.get("note", url), "published": fanclub.page_date(raw) or "",
-                          "tier": page.get("tier", NEWS_TIER), "label": page.get("label", "")}])
+        base = {"url": url, "source": page.get("note", url), "published": fanclub.page_date(raw) or "",
+                "tier": page.get("tier", NEWS_TIER), "label": page.get("label", "")}
+        sources = []
+        for i, e in enumerate(result["events"]):
+            # 予定ごとの詳しいページがあれば「情報元を見る」をそこに向ける（なければ一覧ページ）
+            link = e.get("link", "")
+            sources.append(dict(base, url=link) if link.startswith(("https://", "http://")) else base)
+            e["source_id"] = i
+        n = save_events(conn, result["events"], sources)
         print(f"[イベント] {url} から新しい予定 {n} 件")
         set_state(conn, f"evpage{VERSION}:" + url, digest)
     set_state(conn, f"events_daily{VERSION}", today)

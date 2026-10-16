@@ -240,6 +240,12 @@ class CrawlerTest(unittest.TestCase):
         self.assertEqual(events.save_events(self.conn, [e("IDOL1ST KENTY ASIA TOUR 台北公演", day)], src), 1)
         self.assertEqual(events.save_events(self.conn, [e("中島健人 台北ソロコンサート", day)], src), 1)  # 共通語なしは別扱い
 
+    def test_with_links_keeps_detail_urls(self):
+        raw = '<li><a href="/program/123/">日曜日の初耳学</a> 10/18(日) 22:00</li><a href="#top">上へ</a>'
+        text = fanclub.page_text(events.with_links(raw, "https://thetv.jp/person/1/"))
+        self.assertIn("日曜日の初耳学 ［link: https://thetv.jp/program/123/］", text)
+        self.assertNotIn("#top", text)
+
     def test_notify_new_event(self):
         prev = {"topics": [], "events": ["a|11/3 ライブ"], "youtube": None, "fc": None, "member_no": None,
                 "fc_rank": None, "yt_rank": None}
