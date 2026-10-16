@@ -120,14 +120,16 @@ def send(title: str, body: str) -> None:
 
     targets = json.loads(subs)
     for sub in targets if isinstance(targets, list) else [targets]:
+        host = sub.get("endpoint", "")
+        device = "iPhone/iPad" if "apple.com" in host else "Android" if "googleapis.com" in host else host[:30]
         try:
             webpush(sub, json.dumps({"title": title, "body": body, "url": APP_URL}, ensure_ascii=False),
                     vapid_private_key=key, vapid_claims={"sub": CONTACT})
-            print("[通知] 送りました")
+            print(f"[通知] {device} に送りました", flush=True)
         except WebPushException as e:
             status = getattr(e.response, "status_code", None)
             hint = "（通知の登録が切れています。アプリでもう一度オンにしてください）" if status in (404, 410) else ""
-            print(f"[通知] 送れませんでした: {status} {hint}", file=sys.stderr)
+            print(f"[通知] {device} に送れませんでした: {status} {hint}", flush=True)
 
 
 def main() -> int:
