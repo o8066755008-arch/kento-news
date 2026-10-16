@@ -68,6 +68,13 @@ class CrawlerTest(unittest.TestCase):
         rows = self.conn.execute("SELECT date, grp, value FROM metrics ORDER BY grp").fetchall()
         self.assertEqual(rows, [("2024-05-01", "A", 3000000), ("2026-10-17", "B", 500)])
 
+    def test_is_group_channel(self):
+        self.assertTrue(fanclub.is_group_channel("timelesz", "timelesz [タイムレス]"))
+        self.assertTrue(fanclub.is_group_channel("Hey! Say! JUMP", "Hey! Say! JUMP"))
+        self.assertFalse(fanclub.is_group_channel("NEWS", "Official iNews"))
+        self.assertFalse(fanclub.is_group_channel("NEWS", "TBS NEWS DIG"))
+        self.assertFalse(fanclub.is_group_channel("SUPER EIGHT", "SUPER EIGHT - Topic"))
+
     def test_fan_csv_and_estimate_ignores_outliers(self):
         csv_text = ("タイムスタンプ,グループ,会員番号\n"
                     "2026/10/16 9:00:00,A,\"1,000\"\n"

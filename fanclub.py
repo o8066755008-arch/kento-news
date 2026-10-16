@@ -259,6 +259,15 @@ def crawl_fan_reports(conn, config: dict) -> None:
 
 # ---------------------------------------------------------------- YouTube / Spotify
 
+def is_group_channel(name: str, title: str) -> bool:
+    """チャンネル名がグループ名で始まり、自動生成の「- Topic」チャンネルでないか。
+
+    「NEWS」が「TBS NEWS」や「NEWSポスト」に一致しないよう、先頭一致かつ直後が英字でないことを確かめる。
+    """
+    pattern = r"^" + re.escape(name).replace(r"\ ", r"\s*") + r"(?![A-Za-z])"
+    return bool(re.match(pattern, title, re.IGNORECASE)) and not title.endswith("- Topic")
+
+
 def crawl_youtube(conn, groups: list[dict]) -> None:
     key = os.environ.get("YOUTUBE_API_KEY")
     if not key:
@@ -270,18 +279,20 @@ def crawl_youtube(conn, groups: list[dict]) -> None:
         cid = g.get("youtube_channel_id") or get_state(conn, "yt:" + g["name"])
         if not cid:
             # 初回だけ検索してチャンネルを決める（結果は last_run.log で確認できる）
-            q = urllib.parse.urlencode({"part": "snippet", "type": "channel", "maxResults": 1,
-                                        "q": f"{g['name']} official", "key": key})
+            q = urllib.parse.urlencode({"part": "snippet", "type": "channel", "maxResults": 10,
+                                        "q": f"{g['name']} STARTO", "key": key})
             try:
                 items = get_json(f"{api}/search?{q}").get("items", [])
             except Exception as e:
                 print(f"[YouTube] {g['name']} のチャンネル検索に失敗しました: {e}", file=sys.stderr)
                 continue
-            if not items:
+            match = next((it for it in items if is_group_channel(g["name"], it["snippet"]["title"])), None)
+            if not match:
+                print(f"[YouTube] {g['name']} の公式チャンネルが見つかりません。groups.json に ID を書いてください")
                 continue
-            cid = items[0]["snippet"]["channelId"]
+            cid = match["snippet"]["channelId"]
             set_state(conn, "yt:" + g["name"], cid)
-            print(f"[YouTube] {g['name']} → チャンネル「{items[0]['snippet']['title']}」({cid})")
+            print(f"[YouTube] {g['name']} → チャンネル「{match['snippet']['title']}」({cid})")
         ids[cid] = g["name"]
     if not ids:
         return
@@ -292,6 +303,14 @@ def crawl_youtube(conn, groups: list[dict]) -> None:
         print(f"[YouTube] 取得に失敗しました: {e}", file=sys.stderr)
         return
     for it in items:
+        name = ids[it["id"]]
+        if not is_group_channel(name, it["snippet"]["title"]):
+            # 以前の検索で別のチャンネルを選んでいた場合は選び直す
+            print(f"[YouTube] {name}: 「{it['snippet']['title']}」は別のチャンネルのため選び直します")
+            conn.execute("DELETE FROM watch_state WHERE key = ?", ("yt:" + name,))
+            conn.execute("DELETE FROM metrics WHERE grp = ? AND metric = 'youtube'", (name,))
+            conn.commit()
+            continue
         stats = it["statistics"]
         if stats.get("hiddenSubscriberCount"):
             continue
