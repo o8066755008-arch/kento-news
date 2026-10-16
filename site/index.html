@@ -25,6 +25,10 @@ main{max-width:720px;margin:0 auto;padding:12px 16px calc(24px + env(safe-area-i
 .filters button.on{background:var(--accent);border-color:var(--accent);color:#fff}
 .card{display:block;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin:10px 0;color:inherit;text-decoration:none}
 .card .t{font-weight:600;line-height:1.5}
+.card a.cover{color:inherit;text-decoration:none;display:block}
+.card a.cover::after{content:"";position:absolute;inset:0}
+.card{position:relative}
+.meta a.orig{position:relative;z-index:1;color:var(--accent);margin-left:auto}
 .card .o{color:var(--sub);font-size:.8rem;margin-top:6px;line-height:1.4}
 .meta{display:flex;gap:8px;align-items:center;color:var(--sub);font-size:.78rem;margin-top:8px;flex-wrap:wrap}
 .chip{background:var(--chip);color:var(--accent);border-radius:6px;padding:2px 7px;font-weight:600}
@@ -80,6 +84,10 @@ const fmtDate = iso => {
   return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 };
 
+// 海外の記事は Google 翻訳を通して日本語で開く（うまく開けないときは「原文で開く」から）
+const openUrl = n => n.lang === "ja" ? n.link
+  : `https://translate.google.com/translate?sl=auto&tl=ja&u=${encodeURIComponent(n.link)}`;
+
 function renderDigest() {
   const d = data.digest, el = document.getElementById("digest");
   if (!d || !d.topics.length) { el.innerHTML = ""; return; }
@@ -91,7 +99,7 @@ function renderDigest() {
         <summary><div class="t">${esc(t.title)}</div>
           <div class="o">${esc(t.summary)}</div>
           <div class="meta"><span class="chip">記事 ${t.articles.length} 件</span><span class="more">タップで記事を見る</span></div></summary>
-        <ul>${t.articles.map(a => `<li><a href="${esc(a.link)}" target="_blank" rel="noopener">${esc(a.title)}</a>
+        <ul>${t.articles.map(a => `<li><a href="${esc(openUrl(a))}" target="_blank" rel="noopener">${esc(a.title)}</a>
           <span class="src">${a.lang !== "ja" ? LANG[a.lang] + " ・ " : ""}${esc(a.source)} ・ ${fmtDate(a.published)}</span></li>`).join("")}</ul>
       </details>`).join("");
   }).join("") + `<p class="note">見出しをもとに AI がまとめています（${esc(d.generated)} 作成）。詳しくは各記事をご覧ください。</p>`;
@@ -103,12 +111,13 @@ function renderNews() {
     `<button data-f="${k}" class="${k === filter ? "on" : ""}">${v}</button>`).join("");
   const items = data.news.filter(n => filter === "all" || n.lang === filter);
   document.getElementById("list").innerHTML = items.length ? items.map(n => `
-    <a class="card" href="${esc(n.link)}" target="_blank" rel="noopener">
-      <div class="t">${esc(n.title)}</div>
+    <div class="card">
+      <a class="cover" href="${esc(openUrl(n))}" target="_blank" rel="noopener"><div class="t">${esc(n.title)}</div></a>
       ${n.original ? `<div class="o">${n.translated ? "原文: " : "（翻訳待ち）"}${esc(n.original)}</div>` : ""}
       <div class="meta">${n.lang !== "ja" ? `<span class="chip">${LANG[n.lang]}</span>` : ""}
-        <span>${esc(n.source)}</span><span>${fmtDate(n.published)}</span></div>
-    </a>`).join("") : `<div class="empty">ニュースはまだありません</div>`;
+        <span>${esc(n.source)}</span><span>${fmtDate(n.published)}</span>
+        ${n.lang !== "ja" ? `<a class="orig" href="${esc(n.link)}" target="_blank" rel="noopener">原文で開く</a>` : ""}</div>
+    </div>`).join("") : `<div class="empty">ニュースはまだありません</div>`;
 }
 
 function spark(points) {

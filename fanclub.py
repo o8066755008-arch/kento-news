@@ -32,6 +32,7 @@ CONFIG_PATH = Path(__file__).resolve().parent / "groups.json"
 # Wikimedia の規約で連絡先入りの User-Agent が求められる
 WIKI_UA = "kento-news/0.3 (https://github.com/o8066755008-arch/kento-news)"
 MAX_COUNT = 20_000_000  # これを超える数は誤りとみなす
+MIN_YOUTUBE_SUBS = 10_000  # 公式チャンネルならこれより多いはず
 
 
 def load_config() -> dict:
@@ -279,12 +280,13 @@ def crawl_fan_reports(conn, config: dict) -> None:
 # ---------------------------------------------------------------- YouTube / Spotify
 
 def is_group_channel(name: str, title: str) -> bool:
-    """チャンネル名がグループ名で始まり、自動生成の「- Topic」チャンネルでないか。
+    """チャンネル名がグループ名そのもの（大文字小文字も一致）かどうか。
 
-    「NEWS」が「TBS NEWS」や「NEWSポスト」に一致しないよう、先頭一致かつ直後が英字でないことを確かめる。
+    「timelesz [タイムレス]」「SUPER EIGHT official」のような後ろの補足は認めるが、
+    「News Start」「Supereight」「SUPER EIGHT - Topic」のような別チャンネルは除く。
     """
-    pattern = r"^" + re.escape(name).replace(r"\ ", r"\s*") + r"(?![A-Za-z])"
-    return bool(re.match(pattern, title, re.IGNORECASE)) and not title.endswith("- Topic")
+    pattern = re.escape(name) + r"(\s*[\[(（【].*|\s+(official|Official|OFFICIAL)\b.*)?"
+    return re.fullmatch(pattern, title.strip()) is not None
 
 
 def crawl_youtube(conn, groups: list[dict]) -> None:
@@ -334,6 +336,11 @@ def crawl_youtube(conn, groups: list[dict]) -> None:
         if stats.get("hiddenSubscriberCount"):
             continue
         subs = int(stats["subscriberCount"])
+        if subs < MIN_YOUTUBE_SUBS:
+            print(f"[YouTube] {name}: 「{it['snippet']['title']}」は登録者 {subs:,} 人で公式とは考えにくいため使いません")
+            conn.execute("DELETE FROM metrics WHERE grp = ? AND metric = 'youtube'", (name,))
+            conn.commit()
+            continue
         record(conn, ids[it["id"]], "youtube", subs, f"https://www.youtube.com/channel/{it['id']}")
         print(f"[YouTube] {ids[it['id']]} {subs:,} 人（{it['snippet']['title']}）")
 

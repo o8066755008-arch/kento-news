@@ -96,6 +96,9 @@ class CrawlerTest(unittest.TestCase):
         self.assertFalse(fanclub.is_group_channel("NEWS", "Official iNews"))
         self.assertFalse(fanclub.is_group_channel("NEWS", "TBS NEWS DIG"))
         self.assertFalse(fanclub.is_group_channel("SUPER EIGHT", "SUPER EIGHT - Topic"))
+        self.assertFalse(fanclub.is_group_channel("NEWS", "News Start"))
+        self.assertFalse(fanclub.is_group_channel("SUPER EIGHT", "Supereight"))
+        self.assertTrue(fanclub.is_group_channel("SUPER EIGHT", "SUPER EIGHT official"))
 
     def test_fan_csv_and_estimate_ignores_outliers(self):
         csv_text = ("タイムスタンプ,グループ,会員番号\n"
