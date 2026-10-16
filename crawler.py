@@ -34,6 +34,8 @@ EN_QUERY = '"Kento Nakajima" OR "Nakajima Kento"'
 # Google ニュース: (言語, 検索語, hl, gl, ceid)
 SOURCES = [
     ("ja", "中島健人", "ja", "JP", "JP:ja"),
+    # 公式 SNS（Instagram・X・TikTok）の投稿は、規約上アプリから直接は集められないので、投稿を取り上げた記事で拾う
+    ("ja", "中島健人 (インスタ OR Instagram OR インスタグラム OR TikTok OR SNS OR ポスト OR 投稿 OR 更新)", "ja", "JP", "JP:ja"),
     ("ko", "나카지마 켄토", "ko", "KR", "KR:ko"),
     ("en", EN_QUERY, "en-US", "US", "US:en"),
     ("en", EN_QUERY, "en-SG", "SG", "SG:en"),
