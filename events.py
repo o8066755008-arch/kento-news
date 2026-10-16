@@ -44,9 +44,9 @@ EVENT_QUERIES = [
 SYSTEM = (
     "あなたは中島健人さんのファン向けのイベント情報担当です。渡されたテキストから、"
     "中島健人さんが出る（またはファンが集まる）具体的な予定を抜き出してください。\n"
-    "- kind は「ライブ」「イベント」「出演」「発売・配信」「オフ会」「その他」のどれかにします。"
-    "ライブ・コンサート・ツアーは「ライブ」、ファンミーティング・舞台挨拶・サイン会・展示などは「イベント」、"
-    "テレビ・映画祭・番組などへの出演は「出演」、CD・Blu-ray・DVD・グッズの発売や配信の開始は「発売・配信」、"
+    "- kind は「出演」「イベント」「コンサート」「発売日」「オフ会」「その他」のどれかにします。"
+    "ライブ・コンサート・ツアー・フェスは「コンサート」、ファンミーティング・舞台挨拶・サイン会・展示・映画祭などは「イベント」、"
+    "テレビ・ラジオ・配信番組・映画やドラマの放送などへの出演は「出演」、CD・Blu-ray・DVD・グッズ・写真集の発売や、作品の配信開始は「発売日」、"
     "ファンが主催する集まりは「オフ会」です。\n"
     "- title は日本語で30字以内。place は会場や都市（日本語、わからなければ空文字）。\n"
     "- 各項目には記事の日付（published）が付いています。予定の年が書かれていないときは、"
@@ -75,7 +75,7 @@ SCHEMA = {
                 "type": "object",
                 "properties": {
                     "title": {"type": "string"},
-                    "kind": {"type": "string", "enum": ["ライブ", "イベント", "出演", "発売・配信", "オフ会", "その他"]},
+                    "kind": {"type": "string", "enum": ["出演", "イベント", "コンサート", "発売日", "オフ会", "その他"]},
                     "date": {"type": "string"},
                     "date_text": {"type": "string"},
                     "place": {"type": "string"},
@@ -109,6 +109,9 @@ def open_events(conn):
             found_at TEXT
         )"""
     )
+    # 種類の名前を変えたので、保存済みの予定も合わせる
+    conn.execute("UPDATE events SET kind = 'コンサート' WHERE kind = 'ライブ'")
+    conn.execute("UPDATE events SET kind = '発売日' WHERE kind = '発売・配信'")
     cols = {r[1] for r in conn.execute("PRAGMA table_info(events)")}
     for col, decl in [("tier", "INTEGER DEFAULT 4"), ("source_label", "TEXT"), ("year_certain", "INTEGER DEFAULT 1")]:
         if col not in cols:

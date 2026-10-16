@@ -25,6 +25,7 @@ h1{font-size:1.15rem;margin:0 0 2px}
 main{max-width:720px;margin:0 auto;padding:12px 16px calc(24px + env(safe-area-inset-bottom))}
 .filters{display:flex;gap:8px;overflow-x:auto;padding-bottom:8px}
 .filters button{flex:none;border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:999px;padding:6px 14px;font:inherit;font-size:.85rem}
+.filters.wrap{flex-wrap:wrap;overflow:visible}
 .filters button.on{background:var(--accent);border-color:var(--accent);color:#fff}
 .card{display:block;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin:10px 0;color:inherit;text-decoration:none}
 .card .t{font-weight:600;line-height:1.5}
@@ -413,7 +414,8 @@ function renderNews() {
 }
 
 // ---- イベント
-const KIND_ICON = {ライブ: "🎤", イベント: "🎉", 出演: "📺", "発売・配信": "💿", オフ会: "🤝", その他: "📌"};
+const KIND_ICON = {出演: "📺", イベント: "🎉", コンサート: "🎤", 発売日: "💿", オフ会: "🤝", その他: "📌"};
+const MAIN_KINDS = ["出演", "イベント", "コンサート", "発売日"];  // 予定がなくても常に表示するカテゴリ
 let evFilter = "all";
 const localToday = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
 // これからの予定（日付順・同じ日なら信頼度の高い情報源が先）と、終わった予定に分ける
@@ -434,11 +436,12 @@ function eventCard(e) {
 
 function renderEvents() {
   const up = upcomingEvents(), past = pastEvents();
-  const kinds = ["all", ...Object.keys(KIND_ICON).filter(k => up.some(e => e.kind === k))];
+  const count = k => up.filter(e => k === "all" || e.kind === k).length;
+  const kinds = ["all", ...Object.keys(KIND_ICON).filter(k => MAIN_KINDS.includes(k) || count(k))];
   const items = up.filter(e => evFilter === "all" || e.kind === evFilter);
-  document.getElementById("events").innerHTML = `<h2 class="sec">🎤 これからの予定</h2>
-    <div class="filters">${kinds.map(k => `<button data-ev="${k}" class="${k === evFilter ? "on" : ""}">${k === "all" ? "すべて" : KIND_ICON[k] + " " + k}</button>`).join("")}</div>
-    ${items.length ? items.map(eventCard).join("") : `<div class="empty">これからの予定はまだ見つかっていません<br>公式・番組表・ニュースから自動で集めます</div>`}
+  document.getElementById("events").innerHTML = `<h2 class="sec">🗓 これからの予定</h2>
+    <div class="filters wrap">${kinds.map(k => `<button data-ev="${k}" class="${k === evFilter ? "on" : ""}">${k === "all" ? "すべて" : KIND_ICON[k] + " " + k} ${count(k)}</button>`).join("")}</div>
+    ${items.length ? items.map(eventCard).join("") : `<div class="empty">${evFilter === "all" ? "これからの予定" : esc(evFilter) + "の予定"}はまだ見つかっていません<br>公式・番組表・ニュースから自動で集めます</div>`}
     ${past.length ? `<details class="pastbox"><summary>過去の出来事（${past.length}件）</summary>${past.map(eventCard).join("")}</details>` : ""}
     <p class="note">公式（STARTO・公式サイト・ソニーミュージック）→ 番組表 → 映画・ドラマ情報 → ニュース・ライブ情報 → まとめ の順に信頼度が高く、同じ予定は信頼度の高い情報源を表示しています。AI が読み取っているため、日時や場所は必ず情報元で確かめてください。</p>`;
 }
