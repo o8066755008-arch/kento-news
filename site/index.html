@@ -165,8 +165,10 @@ const SAFARI_TIP = `<div class="tip">🌏 海外の記事は、開いたあと S
 const DASH_NAME = "中島健人";
 
 // 指定した指標でのグループ内の順位（数字があるグループの中で）
+const meta = name => (data.groups_meta || {})[name] || {};
+
 function rankOf(pick, name) {
-  const rows = Object.entries(data.fanclub).map(([n, g]) => ({n, p: pick(g)})).filter(r => r.p)
+  const rows = Object.entries(data.fanclub).filter(([n]) => !(pick === fcLatest && meta(n).ended)).map(([n, g]) => ({n, p: pick(g)})).filter(r => r.p)
     .sort((a, b) => b.p.value - a.p.value);
   const i = rows.findIndex(r => r.n === name);
   return i < 0 ? null : {no: i + 1, of: rows.length};
@@ -335,8 +337,9 @@ function otherSites(g) {
 
 function renderRanking() {
   const pick = rankBy === "fc" ? fcLatest : ytLatest;
-  const rows = Object.entries(data.fanclub).map(([name, g]) => ({name, p: pick(g)}))
-    .filter(r => r.p).sort((a, b) => b.p.value - a.p.value).slice(0, 5);
+  // 活動を終えたグループは FC 会員数のランキングから外す
+  const rows = Object.entries(data.fanclub).filter(([name]) => !(rankBy === "fc" && meta(name).ended))
+    .map(([name, g]) => ({name, p: pick(g)})).filter(r => r.p).sort((a, b) => b.p.value - a.p.value).slice(0, 5);
   const max = rows.length ? rows[0].p.value : 1;
   const bars = rows.map((r, i) => `<div class="bar" title="${esc(r.name)}：${num(r.p.value)} 人（${esc(r.p.date)} 時点${r.p.press ? "・報道での推定" : ""}）">
       <span class="no">${i + 1}</span><span class="nm">${esc(r.name)}</span>
@@ -346,19 +349,20 @@ function renderRanking() {
     <div class="seg"><button data-rank="fc" class="${rankBy === "fc" ? "on" : ""}">FC会員数</button>
       <button data-rank="yt" class="${rankBy === "yt" ? "on" : ""}">YouTube登録者</button></div>
     ${bars || `<div class="note">まだデータがありません</div>`}
-    ${rankBy === "fc" ? `<p class="note">公式発表・報道に数字が出たグループだけが並びます。会員数は公式には公表されていないため、多くは「推定」です。サイトごとに数字がずれるので、ランキングは1つのサイト（report-newage.com）の推計値で比べています。</p>` : ""}</div>`;
+    ${rankBy === "fc" ? `<p class="note">公式発表・報道に数字が出たグループだけが並びます。会員数は公式には公表されていないため、多くは「推定」です。サイトごとに数字がずれるので、ランキングは1つのサイト（snowman-information.com）の推計値で比べています。活動を終えた嵐は順位から外しています。</p>` : ""}</div>`;
 }
 
 function renderFanclub() {
-  const sortKey = g => (rankBy === "fc" ? fcLatest(g) : ytLatest(g))?.value ?? -1;
+  const sortKey = ([name, g]) => rankBy === "fc" && meta(name).ended ? -2  // 活動終了は最後に
+    : (rankBy === "fc" ? fcLatest(g) : ytLatest(g))?.value ?? -1;
   const groups = Object.entries(data.fanclub).sort((a, b) =>
-    sortKey(b[1]) - sortKey(a[1]) || (ytLatest(b[1])?.value ?? -1) - (ytLatest(a[1])?.value ?? -1));
+    sortKey(b) - sortKey(a) || (ytLatest(b[1])?.value ?? -1) - (ytLatest(a[1])?.value ?? -1));
   const form = data.fan_form_url ? `<a class="card cta" href="${esc(data.fan_form_url)}" target="_blank" rel="noopener">
       <div class="t">📮 あなたの会員番号を教えてください</div>
       <div class="o">下3桁は伏せたまま（例: 1234xxx）、グループと番号だけを匿名で送れます。集まった番号から最新の会員番号を推定します。</div></a>` : "";
   const note = `<p class="note">公式発表はニュース・Wikipedia に載ったときだけ更新されます。会員番号は退会者を含む通し番号のため、今の会員数とは一致しません。</p>`;
   document.getElementById("fanclub").innerHTML = renderRanking() + form + (groups.length ? groups.map(([name, g]) => `
-    <div class="card fc"><div class="t">${esc(name)}</div>${METRICS.map(m => metricRow(m, g[m.key])).join("")}${otherSites(g)}</div>`).join("") + note
+    <div class="card fc"><div class="t">${esc(name)}${meta(name).solo ? ` <span class="chip">ソロ</span>` : ""}${meta(name).ended ? ` <span class="chip">活動終了</span>` : ""}</div>${METRICS.map(m => metricRow(m, g[m.key])).join("")}${otherSites(g)}</div>`).join("") + note
     : `<div class="empty">まだデータがありません<br>毎日の記録が始まると、ここに推移が表示されます</div>`);
 }
 

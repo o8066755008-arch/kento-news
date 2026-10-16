@@ -3,13 +3,13 @@
   "fan_form_csv_url": "https://docs.google.com/spreadsheets/d/1gFxL2t1PqH_9gFx0bqVlxn3UrpatZ62MEnOxxO9sR8o/export?format=csv",
   "watch_pages": [
     {
-      "url": "https://report-newage.com/18785",
+      "url": "https://snowman-information.com/johnnys-fc/",
       "primary": true,
-      "note": "全グループのランキング。ランキングはこのサイトの数字で定点観測する"
+      "note": "ランキングの基準（月次更新）。自動では表を読み取れないため、月1回 manual_metrics.json に手で入れる"
     },
     {
-      "url": "https://snowman-information.com/johnnys-fc/",
-      "note": "比較用（月次更新）。いまは数字を読み取れていない"
+      "url": "https://report-newage.com/18785",
+      "note": "比較用（2026年5月ごろの記事）"
     }
   ],
   "groups": [
@@ -103,7 +103,8 @@
       "wikipedia": "嵐",
       "youtube_channel_id": "UCP7Gw_YZAuh4Yg2fcdcuumQ",
       "spotify_artist_id": "",
-      "note": "チャンネル名は「ARASHI」"
+      "note": "2026年5月31日で活動終了。ランキングから外し、数字は参考として表示",
+      "ended": true
     },
     {
       "name": "櫻井翔",
@@ -129,6 +130,42 @@
       "youtube_channel_id": "",
       "spotify_artist_id": "",
       "solo": true
+    },
+    {
+      "name": "A.B.C-Z",
+      "wikipedia": "A.B.C-Z",
+      "youtube_channel_id": "",
+      "spotify_artist_id": ""
+    },
+    {
+      "name": "20th Century",
+      "wikipedia": "20th Century",
+      "youtube_channel_id": "",
+      "spotify_artist_id": ""
+    },
+    {
+      "name": "横山裕",
+      "wikipedia": "横山裕",
+      "youtube_channel_id": "",
+      "spotify_artist_id": "",
+      "solo": true,
+      "youtube": "none"
+    },
+    {
+      "name": "中島裕翔",
+      "wikipedia": "中島裕翔",
+      "youtube_channel_id": "",
+      "spotify_artist_id": "",
+      "solo": true,
+      "youtube": "none"
+    },
+    {
+      "name": "河合郁人",
+      "wikipedia": "河合郁人",
+      "youtube_channel_id": "",
+      "spotify_artist_id": "",
+      "solo": true,
+      "youtube": "none"
     }
   ]
 }

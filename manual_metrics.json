@@ -1,4 +1,5 @@
 {
+  "note": "estimate は snowman-information.com（ランキングの基準）の数字。月1回、更新日を date に入れて書き足す。ジュニア（230万）はデビュー組と性質が違うため入れていない",
   "entries": [
     {
       "group": "中島健人",
@@ -6,6 +7,153 @@
       "value": 100000,
       "date": "2026-09-30",
       "source": "利用者本人の会員番号が10万番台であることを確認（ファンの投稿・まとめサイトでも2026年8〜9月ごろに10万番到達とされる）"
+    },
+    {
+      "group": "Snow Man",
+      "metric": "estimate",
+      "value": 1942000,
+      "date": "2026-10-10",
+      "source": "https://snowman-information.com/johnnys-fc/"
+    },
+    {
+      "group": "King & Prince",
+      "metric": "estimate",
+      "value": 1160000,
+      "date": "2026-10-10",
+      "source": "https://snowman-information.com/johnnys-fc/"
+    },
+    {
+      "group": "SixTONES",
+      "metric": "estimate",
+      "value": 1130000,
+      "date": "2026-10-10",
+      "source": "https://snowman-information.com/johnnys-fc/"
+    },
+    {
+      "group": "timelesz",
+      "metric": "estimate",
+      "value": 1010000,
+      "date": "2026-10-10",
+      "source": "https://snowman-information.com/johnnys-fc/"
+    },
+    {
+      "group": "なにわ男子",
+      "metric": "estimate",
+      "value": 1002000,
+      "date": "2026-10-10",
+      "source": "https://snowman-information.com/johnnys-fc/"
+    },
+    {
+      "group": "Hey! Say! JUMP",
+      "metric": "estimate",
+      "value": 960000,
+      "date": "2026-10-10",
+      "source": "https://snowman-information.com/johnnys-fc/"
+    },
+    {
+      "group": "SUPER EIGHT",
+      "metric": "estimate",
+      "value": 850000,
+      "date": "2026-10-10",
+      "source": "https://snowman-information.com/johnnys-fc/"
+    },
+    {
+      "group": "Kis-My-Ft2",
+      "metric": "estimate",
+      "value": 640000,
+      "date": "2026-10-10",
+      "source": "https://snowman-information.com/johnnys-fc/"
+    },
+    {
+      "group": "NEWS",
+      "metric": "estimate",
+      "value": 460000,
+      "date": "2026-10-10",
+      "source": "https://snowman-information.com/johnnys-fc/"
+    },
+    {
+      "group": "Aぇ! group",
+      "metric": "estimate",
+      "value": 350000,
+      "date": "2026-10-10",
+      "source": "https://snowman-information.com/johnnys-fc/"
+    },
+    {
+      "group": "Travis Japan",
+      "metric": "estimate",
+      "value": 300000,
+      "date": "2026-10-10",
+      "source": "https://snowman-information.com/johnnys-fc/"
+    },
+    {
+      "group": "櫻井翔",
+      "metric": "estimate",
+      "value": 140000,
+      "date": "2026-10-10",
+      "source": "https://snowman-information.com/johnnys-fc/"
+    },
+    {
+      "group": "A.B.C-Z",
+      "metric": "estimate",
+      "value": 101000,
+      "date": "2026-10-10",
+      "source": "https://snowman-information.com/johnnys-fc/"
+    },
+    {
+      "group": "中島健人",
+      "metric": "estimate",
+      "value": 100000,
+      "date": "2026-10-10",
+      "source": "https://snowman-information.com/johnnys-fc/"
+    },
+    {
+      "group": "木村拓哉",
+      "metric": "estimate",
+      "value": 95000,
+      "date": "2026-10-10",
+      "source": "https://snowman-information.com/johnnys-fc/"
+    },
+    {
+      "group": "相葉雅紀",
+      "metric": "estimate",
+      "value": 90000,
+      "date": "2026-10-10",
+      "source": "https://snowman-information.com/johnnys-fc/"
+    },
+    {
+      "group": "20th Century",
+      "metric": "estimate",
+      "value": 74000,
+      "date": "2026-10-10",
+      "source": "https://snowman-information.com/johnnys-fc/"
+    },
+    {
+      "group": "横山裕",
+      "metric": "estimate",
+      "value": 59000,
+      "date": "2026-10-10",
+      "source": "https://snowman-information.com/johnnys-fc/"
+    },
+    {
+      "group": "中島裕翔",
+      "metric": "estimate",
+      "value": 15000,
+      "date": "2026-10-10",
+      "source": "https://snowman-information.com/johnnys-fc/"
+    },
+    {
+      "group": "河合郁人",
+      "metric": "estimate",
+      "value": 6000,
+      "date": "2026-10-10",
+      "source": "https://snowman-information.com/johnnys-fc/"
+    }
+  ],
+  "remove": [
+    {
+      "group": "timelesz",
+      "metric": "official",
+      "reason": "公式発表の出典を確認できないため。報道・推計として扱う"
     }
   ]
 }

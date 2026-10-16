@@ -142,6 +142,13 @@ class CrawlerTest(unittest.TestCase):
         self.assertIn("Snow Man\n約300万人", snip)
         self.assertNotIn("関係ない", snip)
 
+    def test_page_date_prefers_modified(self):
+        raw = ('<meta property="article:published_time" content="2026-05-01T10:00:00+09:00">'
+               '<meta property="article:modified_time" content="2026-10-10T08:00:00+09:00">')
+        self.assertEqual(fanclub.page_date(raw), "2026-10-10")
+        self.assertEqual(fanclub.page_date('{"datePublished":"2026-05-20T00:00:00"}'), "2026-05-20")
+        self.assertIsNone(fanclub.page_date("<html></html>"))
+
     def test_find_image(self):
         page = '<head><meta content="/img/a.jpg?x=1&amp;y=2" property="og:image"></head>'
         self.assertEqual(thumbnails.find_image(page, "https://site.example/news/1"),

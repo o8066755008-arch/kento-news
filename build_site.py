@@ -32,7 +32,10 @@ def build(conn, out: Path = SITE_DIR / "data.json", limit: int = 800) -> dict:
         for t in digest["topics"]:
             for a in t["articles"]:
                 a["image"] = images.get(a["link"])
+    groups_meta = {g["name"]: {"solo": g.get("solo", False), "ended": g.get("ended", False)}
+                   for g in config["groups"]}
     data = {"updated": time.strftime("%Y-%m-%d %H:%M"), "news": news, "digest": digest, "fanclub": fanclub,
+            "groups_meta": groups_meta,
             "fan_form_url": config.get("fan_form_url", "")}
     out.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
     return data

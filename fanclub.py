@@ -176,6 +176,16 @@ def page_snippets(text: str, names: list[str]) -> str:
     return "\n".join(lines[i] for i in sorted(keep) if 0 <= i < len(lines))
 
 
+def page_date(raw_html: str) -> str | None:
+    """ページの更新日（なければ公開日）を YYYY-MM-DD で返す。"""
+    for key in ("article:modified_time", "og:updated_time", "dateModified",
+                "article:published_time", "datePublished"):
+        m = re.search(rf'{key}["\']?\s*(?:content=|:)\s*["\'](\d{{4}}-\d{{2}}-\d{{2}})', raw_html)
+        if m:
+            return m.group(1)
+    return None
+
+
 PAGE_NOTE = (
     "このテキストはファンが運営するまとめサイトの記事です。公式発表を引用している箇所でも、"
     "まとめサイト経由の数字なので kind は「press」にしてください。"
@@ -196,11 +206,12 @@ def crawl_pages(conn, groups: list[dict], pages: list[dict]) -> None:
     names = [g["name"] for g in groups]
     for page in pages:
         url = page["url"]
+        # 定点観測と比較用を切り替えたときは、以前の扱いで記録した分を消す
         if page.get("primary"):
-            # 比較用として記録していたサイトを定点観測に切り替えたときは、比較用の記録を消す
-            conn.execute("DELETE FROM metrics WHERE metric = ?",
-                         ("site:" + urllib.parse.urlparse(url).netloc,))
-            conn.commit()
+            conn.execute("DELETE FROM metrics WHERE metric = ?", ("site:" + urllib.parse.urlparse(url).netloc,))
+        else:
+            conn.execute("DELETE FROM metrics WHERE metric = 'estimate' AND source = ?", (url,))
+        conn.commit()
         if not thumbnails.allowed(url):
             print(f"[ページ] {url} は robots.txt で禁止されているため読みません")
             continue
@@ -223,7 +234,8 @@ def crawl_pages(conn, groups: list[dict], pages: list[dict]) -> None:
             continue
         for it in result["items"]:
             it["kind"] = site_metric(page)  # まとめサイトの数字は公式扱いにしない
-        n = save_official(conn, result["items"], url, date.today().isoformat())
+        # 日付がわからない数字は、読んだ日ではなくページの更新日（なければ公開日）で記録する
+        n = save_official(conn, result["items"], url, page_date(raw) or date.today().isoformat())
         print(f"[ページ] {url} から {n} 件を記録しました")
         if n:
             set_state(conn, state_key, digest)
@@ -490,9 +502,15 @@ def load_manual(conn) -> None:
     """manual_metrics.json に人が書いた数字（出典つき）を毎回取り込む。"""
     if not MANUAL_PATH.exists():
         return
-    for m in json.loads(MANUAL_PATH.read_text(encoding="utf-8"))["entries"]:
+    manual = json.loads(MANUAL_PATH.read_text(encoding="utf-8"))
+    for m in manual["entries"]:
         record(conn, m["group"], m["metric"], int(m["value"]), m["source"], m["date"])
         print(f"[手動] {m['group']} {m['metric']} {int(m['value']):,}（{m['date']}）")
+    # 出典が確かめられなかった記録を消す
+    for m in manual.get("remove", []):
+        conn.execute("DELETE FROM metrics WHERE grp = ? AND metric = ?", (m["group"], m["metric"]))
+        print(f"[手動] {m['group']} の {m['metric']} を削除（{m['reason']}）")
+    conn.commit()
 
 
 def main() -> int:
