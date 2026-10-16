@@ -215,6 +215,18 @@ class CrawlerTest(unittest.TestCase):
         n = events.save_events(self.conn, evs, [{"url": "u", "source": "s", "published": pub + "T00:00:00"}])
         self.assertEqual(n, 1)
 
+    def test_same_event_keeps_more_trusted_source(self):
+        events.open_events(self.conn)
+        from datetime import date, timedelta
+        day = (date.today() + timedelta(days=30)).isoformat()
+        e = lambda t: {"title": t, "kind": "ライブ", "date": day, "date_text": "x", "place": "",
+                       "region": "国内", "year_certain": True, "source_id": 0}
+        self.assertEqual(events.save_events(self.conn, [e("東京ドーム公演 決定")], [{"url": "news", "source": "n"}]), 1)
+        self.assertEqual(events.save_events(self.conn, [e("中島健人 東京ドーム公演")],
+                                            [{"url": "starto", "source": "s", "tier": 1, "label": "公式"}]), 0)
+        self.assertEqual(self.conn.execute("SELECT url, tier, source_label FROM events").fetchall(),
+                         [("starto", 1, "公式")])
+
     def test_notify_new_event(self):
         prev = {"topics": [], "events": ["a|11/3 ライブ"], "youtube": None, "fc": None, "member_no": None,
                 "fc_rank": None, "yt_rank": None}
@@ -237,6 +249,11 @@ class CrawlerTest(unittest.TestCase):
              mock.patch("notify.form_subscriptions", return_value=notify_parse(buf.getvalue())):
             subs = notify.all_subscriptions(self.conn, {"notify": {"subscribe_csv_url": "https://x"}})
         self.assertEqual([x["endpoint"] for x in subs], [a["endpoint"], b["endpoint"]])
+
+    def test_decode_html_shift_jis(self):
+        body = '<meta charset="Shift_JIS"><p>中島健人 出演</p>'.encode("cp932")
+        self.assertIn("中島健人", thumbnails.decode_html(body, None))
+        self.assertIn("中島健人", thumbnails.decode_html("中島健人".encode("euc-jp"), "euc-jp"))
 
     def test_find_image(self):
         page = '<head><meta content="/img/a.jpg?x=1&amp;y=2" property="og:image"></head>'

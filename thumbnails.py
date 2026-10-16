@@ -14,7 +14,7 @@ import urllib.parse
 import urllib.request
 import urllib.robotparser
 
-from crawler import USER_AGENT, open_db
+from crawler import HEADERS, USER_AGENT, open_db
 
 MAX_PER_RUN = 80
 MAX_BYTES = 400_000  # <head> が読めれば十分なので先頭だけ読む
@@ -39,9 +39,23 @@ def allowed(url: str) -> bool:
 
 def read_head(url: str, max_bytes: int = MAX_BYTES) -> tuple[str, str]:
     """ページの先頭を読み、(最終的な URL, HTML) を返す。"""
-    req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT, "Accept-Language": "ja,en;q=0.8"})
+    req = urllib.request.Request(url, headers=HEADERS)
     with urllib.request.urlopen(req, timeout=15) as res:
-        return res.geturl(), res.read(max_bytes).decode("utf-8", errors="replace")
+        body = res.read(max_bytes)
+        return res.geturl(), decode_html(body, res.headers.get_content_charset())
+
+
+def decode_html(body: bytes, header_charset: str | None) -> str:
+    """文字コードを判定して読む（Shift_JIS や EUC-JP の日本のサイトもあるため）。"""
+    charset = header_charset
+    if not charset:
+        m = re.search(rb'<meta[^>]+charset=["\']?([\w-]+)', body[:4000], re.IGNORECASE)
+        charset = m.group(1).decode() if m else "utf-8"
+    charset = {"shift_jis": "cp932", "sjis": "cp932", "x-sjis": "cp932", "windows-31j": "cp932"}.get(charset.lower(), charset)
+    try:
+        return body.decode(charset, errors="replace")
+    except LookupError:
+        return body.decode("utf-8", errors="replace")
 
 
 def decode_google_news(link: str) -> str | None:

@@ -35,12 +35,13 @@ def build(conn, out: Path = SITE_DIR / "data.json", limit: int = 800) -> dict:
     # イベント：これからの予定と、終わって2週間以内のもの（日付未定も含む）
     import events as ev
     ev.open_events(conn)
-    since = time.strftime("%Y-%m-%d", time.localtime(time.time() - 14 * 86400))
+    since = time.strftime("%Y-%m-%d", time.localtime(time.time() - 90 * 86400))  # 過去の出来事は90日分
     events = [
-        {"title": t, "kind": k, "date": d, "date_text": dt, "place": pl, "region": r, "url": u, "source": src}
-        for t, k, d, dt, pl, r, u, src in conn.execute(
-            "SELECT title, kind, date, date_text, place, region, url, source FROM events "
-            "WHERE date = '' OR date >= ? ORDER BY date = '', date", (since,))
+        {"title": t, "kind": k, "date": d, "date_text": dt, "place": pl, "region": r, "url": u, "source": src,
+         "tier": tier, "label": label or "ニュース", "year_certain": bool(yc)}
+        for t, k, d, dt, pl, r, u, src, tier, label, yc in conn.execute(
+            "SELECT title, kind, date, date_text, place, region, url, source, tier, source_label, year_certain "
+            "FROM events WHERE date = '' OR date >= ? ORDER BY date = '', date, tier", (since,))
     ]
     groups_meta = {g["name"]: {"solo": g.get("solo", False), "ended": g.get("ended", False)}
                    for g in config["groups"]}

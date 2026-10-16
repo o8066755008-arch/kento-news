@@ -11,22 +11,97 @@
     "note": "通知のしきい値。youtube_step / fc_step は何人ごとの区切りで知らせるか（10000 = 1万人ごと）",
     "new_events": true
   },
+  "event_pages_note": "tier は信頼度（1 が最も高い）。同じ予定が複数のページにあれば tier の小さい方を使う。X・Instagram・TikTok・FC 会員ページは規約やログインの都合で自動では読まない",
   "event_pages": [
     {
-      "url": "https://www.sonymusic.co.jp/artist/KentoNakajima/info/",
-      "note": "公式（ソニーミュージック）のお知らせ。ライブ・イベント・出演情報"
+      "tier": 1,
+      "label": "公式",
+      "url": "https://starto.jp/s/p/artist/156",
+      "note": "STARTO 中島健人ページ（最新情報・販売情報）"
     },
     {
+      "tier": 1,
+      "label": "公式",
+      "url": "https://starto.jp/s/p/news/list?ima=2817&tag=156&list%5B%5D=156&artist=156",
+      "note": "STARTO ニュース一覧"
+    },
+    {
+      "tier": 1,
+      "label": "公式",
+      "url": "https://starto.jp/s/p/live?ima=1605&tag=156&list%5B%5D=156&artist=156",
+      "note": "STARTO 公演情報"
+    },
+    {
+      "tier": 1,
+      "label": "公式",
+      "url": "https://www.nakajimakento.com/",
+      "note": "公式サイト"
+    },
+    {
+      "tier": 1,
+      "label": "公式",
+      "url": "https://www.sonymusic.co.jp/artist/KentoNakajima/",
+      "note": "ソニーミュージック（ライブ・イベント・メディア情報）"
+    },
+    {
+      "tier": 2,
+      "label": "番組表",
+      "url": "http://www2.meetv.jp/s/9399.html",
+      "note": "IPG番組表 × TVstation"
+    },
+    {
+      "tier": 2,
+      "label": "番組表",
+      "url": "https://thetv.jp/person/1000066864/",
+      "note": "ザテレビジョン 人物ページ"
+    },
+    {
+      "tier": 3,
+      "label": "映画・ドラマ",
+      "url": "https://www.cinematoday.jp/name/%E4%B8%AD%E5%B3%B6%E5%81%A5%E4%BA%BA/article",
+      "note": "シネマトゥデイ"
+    },
+    {
+      "tier": 3,
+      "label": "映画・ドラマ",
+      "url": "https://www.crank-in.net/person/195541/filmography",
+      "note": "クランクイン！出演作"
+    },
+    {
+      "tier": 3,
+      "label": "映画・ドラマ",
+      "url": "https://movie.storm-labels.co.jp/lovenotcomedy/",
+      "note": "『ラブ≠コメディ』公式"
+    },
+    {
+      "tier": 3,
+      "label": "映画・ドラマ",
+      "url": "https://eiga.com/movie/105673/",
+      "note": "映画.com『ラブ≠コメディ』"
+    },
+    {
+      "tier": 4,
+      "label": "ライブ情報",
+      "url": "https://live-events.a-jp.org/soko/a/144.html",
+      "note": "ライブイベント情報"
+    },
+    {
+      "tier": 4,
+      "label": "ライブ情報",
+      "url": "https://bestcalendar.jp/events/%E4%B8%AD%E5%B3%B6%E5%81%A5%E4%BA%BA",
+      "note": "bestcalendar"
+    },
+    {
+      "tier": 5,
+      "label": "まとめ",
+      "url": "https://apoo.jp/a/i/nakajimakento.html",
+      "note": "apoo（補助）"
+    },
+    {
+      "tier": 5,
+      "label": "オフ会",
       "url": "https://twipla.jp/search?keyword=%E4%B8%AD%E5%B3%B6%E5%81%A5%E4%BA%BA",
       "note": "ツイプラ（ファンのオフ会・イベント告知）"
-    },
-    {
-      "url": "https://starto.jp/s/p/artist/156",
-      "note": "STARTO 公式のアーティストページ（お知らせ・出演情報）"
-    },
-    {
-      "url": "https://www.tvkingdom.jp/schedulesBySearch.action?stationPlatformId=0&condition.keyword=%E4%B8%AD%E5%B3%B6%E5%81%A5%E4%BA%BA",
-      "note": "テレビ王国（テレビ出演の番組表）"
     }
   ],
   "watch_pages": [

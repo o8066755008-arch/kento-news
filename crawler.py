@@ -20,7 +20,13 @@ import translate
 
 BASE_DIR = Path(__file__).resolve().parent
 DB_PATH = BASE_DIR / "data.db"
-USER_AGENT = "kento-news-crawler/0.2 (personal use)"
+# 機械からのアクセスであることと連絡先を名乗る、一般的なクローラーの書き方（ブラウザのふりはしない）
+USER_AGENT = "Mozilla/5.0 (compatible; kento-news/1.0; +https://o8066755008-arch.github.io/kento-news/)"
+HEADERS = {
+    "User-Agent": USER_AGENT,
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Accept-Language": "ja,en;q=0.8",
+}
 
 # 名前の表記ゆれ。英語表記は姓名の順が両方使われる
 EN_QUERY = '"Kento Nakajima" OR "Nakajima Kento"'
@@ -58,7 +64,7 @@ def feed_url(query: str, hl: str, gl: str, ceid: str) -> str:
 
 
 def fetch(url: str) -> bytes:
-    req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    req = urllib.request.Request(url, headers=HEADERS)
     with urllib.request.urlopen(req, timeout=20) as res:
         return res.read()
 

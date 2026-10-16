@@ -28,7 +28,7 @@ EVENT_WORDS = re.compile(
     r"콘서트|투어|팬미팅|공연|내한|演唱會|巡演|見面會|粉絲見面|簽名會|คอนเสิร์ต|แฟนมีต",
     re.IGNORECASE)
 
-VERSION = 2  # 読み取り方を変えたら上げる（それまでのイベントを消して読み直す）
+VERSION = 3  # 読み取り方を変えたら上げる（それまでのイベントを消して読み直す）
 
 # イベントを探すためのニュース検索（Google ニュース）: (検索語, hl, gl, ceid)
 EVENT_QUERIES = [
@@ -53,7 +53,9 @@ SYSTEM = (
     "それが既に終わった話なのか翌年の予定なのかを文脈で判断し、終わった話なら入れない）。\n"
     "- 記事の日付の時点ですでに終わっていた予定・始まっていた番組は入れないでください。\n"
     "- date は開催日（期間なら初日）を YYYY-MM-DD、日付がわからなければ空文字。"
-    "date_text は「2026年11月3日〜5日」のように年も付けた日本語で書きます。\n"
+    "date_text は「2026年11月3日〜5日」のように年も付けた日本語で書きます。"
+    "year_certain は、年が本文に書かれている・記事の日付からはっきり決められるなら true、推測なら false。\n"
+    "- 番組表のページでは、中島健人さんが出る番組を1つずつ（放送日時・局つきで）入れます。\n"
     "- region は日本国内なら「国内」、海外なら「海外」。\n"
     "- source_id には根拠になった項目の番号を入れます。\n"
     "- 予定ではない話題（過去の感想、インタビュー、ランキングなど）や、中島健人さんと関係ない予定は入れないでください。"
@@ -74,9 +76,10 @@ SCHEMA = {
                     "date_text": {"type": "string"},
                     "place": {"type": "string"},
                     "region": {"type": "string", "enum": ["国内", "海外"]},
+                    "year_certain": {"type": "boolean"},
                     "source_id": {"type": "integer"},
                 },
-                "required": ["title", "kind", "date", "date_text", "place", "region", "source_id"],
+                "required": ["title", "kind", "date", "date_text", "place", "region", "year_certain", "source_id"],
                 "additionalProperties": False,
             },
         }
@@ -101,7 +104,30 @@ def open_events(conn):
             found_at TEXT
         )"""
     )
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(events)")}
+    for col, decl in [("tier", "INTEGER DEFAULT 4"), ("source_label", "TEXT"), ("year_certain", "INTEGER DEFAULT 1")]:
+        if col not in cols:
+            conn.execute(f"ALTER TABLE events ADD COLUMN {col} {decl}")
     return conn
+
+
+NEWS_TIER = 4  # ニュース記事からの予定（公式・番組表・映画情報より信頼度は下）
+
+
+def norm(title: str) -> str:
+    return re.sub(r"[\s\W_]+", "", title).lower()
+
+
+def same_event(conn, title: str, day: str):
+    """同じ日付で見出しが似ている予定を探す（別の情報源に同じ予定が載っていることが多いため）。"""
+    import difflib
+    if not day:
+        return None
+    for eid, other, tier in conn.execute("SELECT id, title, tier FROM events WHERE date = ?", (day,)):
+        a, b = norm(title), norm(other)
+        if a in b or b in a or difflib.SequenceMatcher(None, a, b).ratio() >= 0.55:
+            return eid, tier
+    return None
 
 
 def event_id(title: str, day: str) -> str:
@@ -110,6 +136,7 @@ def event_id(title: str, day: str) -> str:
 
 
 def save_events(conn, events: list[dict], sources: list[dict]) -> int:
+    """予定を保存する。同じ予定が別の情報源にもあれば、信頼度の高い（tier の小さい）情報源を残す。"""
     added = 0
     today = date.today()
     for e in events:
@@ -125,17 +152,25 @@ def save_events(conn, events: list[dict], sources: list[dict]) -> int:
         if day and pub and day < pub:
             print(f"[イベント] 記事（{pub}）より前の予定のため除外: {e['date_text']} {e['title']}")
             continue
+        tier = src.get("tier", NEWS_TIER)
+        values = (e["title"], e["kind"], day, e["date_text"], e["place"], e["region"],
+                  src["url"], src["source"], tier, src.get("label", "ニュース"), int(e.get("year_certain", True)))
+        dup = same_event(conn, e["title"], day)
+        if dup:
+            if tier < (dup[1] or NEWS_TIER):
+                conn.execute("UPDATE events SET title=?, kind=?, date=?, date_text=?, place=?, region=?, url=?, "
+                             "source=?, tier=?, source_label=?, year_certain=? WHERE id = ?", values + (dup[0],))
+            continue
         eid = event_id(e["title"], day)
         if conn.execute("SELECT 1 FROM events WHERE id = ?", (eid,)).fetchone():
             continue
         conn.execute(
-            "INSERT INTO events (id, title, kind, date, date_text, place, region, url, source, found_at) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            (eid, e["title"], e["kind"], day, e["date_text"], e["place"], e["region"],
-             src["url"], src["source"], today.isoformat()),
+            "INSERT INTO events (title, kind, date, date_text, place, region, url, source, tier, source_label, "
+            "year_certain, id, found_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            values + (eid, today.isoformat()),
         )
         added += 1
-        print(f"[イベント] {e['kind']} {e['date_text'] or '日付未定'} {e['title']}（{e['place'] or '場所未定'}）")
+        print(f"[イベント] [{src.get('label', 'ニュース')}] {e['kind']} {e['date_text'] or '日付未定'} {e['title']}")
     conn.commit()
     return added
 
@@ -202,7 +237,7 @@ def from_pages(conn, pages: list[dict]) -> None:
     if get_state(conn, f"events_daily{VERSION}") == today:
         print("[イベント] 告知ページは今日すでに確認済みです")
         return
-    for page in pages:
+    for page in sorted(pages, key=lambda p: p.get("tier", NEWS_TIER)):
         url = page["url"]
         if not thumbnails.allowed(url):
             print(f"[イベント] {url} は robots.txt で禁止されているため読みません")
@@ -218,7 +253,7 @@ def from_pages(conn, pages: list[dict]) -> None:
         keep = sorted({j for i, l in enumerate(lines)
                        if re.search(r"\d{1,2}\s*[/月.]\s*\d{1,2}|\d{4}[/.-]\d{1,2}", l)
                        for j in (i - 1, i, i + 1) if 0 <= j < len(lines)})
-        snippet = "\n".join(lines[j] for j in keep)[:15000]
+        snippet = "\n".join(lines[j] for j in keep)[:8000]
         digest = hashlib.sha256(snippet.encode()).hexdigest()
         print(f"[イベント] {url}: 本文 {len(text)} 文字 / 日付のある部分 {len(snippet)} 文字")
         if not snippet or get_state(conn, f"evpage{VERSION}:" + url) == digest:
@@ -229,7 +264,8 @@ def from_pages(conn, pages: list[dict]) -> None:
         for e in result["events"]:
             e["source_id"] = 0
         n = save_events(conn, result["events"],
-                        [{"url": url, "source": page.get("note", url), "published": fanclub.page_date(raw) or ""}])
+                        [{"url": url, "source": page.get("note", url), "published": fanclub.page_date(raw) or "",
+                          "tier": page.get("tier", NEWS_TIER), "label": page.get("label", "")}])
         print(f"[イベント] {url} から新しい予定 {n} 件")
         set_state(conn, f"evpage{VERSION}:" + url, digest)
     set_state(conn, f"events_daily{VERSION}", today)

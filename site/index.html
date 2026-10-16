@@ -111,7 +111,18 @@ svg.spark{width:100%;height:46px;margin-top:6px}
 .evd b{display:block;font-size:1.1rem}
 .evd small{font-size:.72rem}
 .evb{flex:1;min-width:0}
+.meta .src{border-radius:6px;padding:1px 6px;font-weight:700;font-size:.72rem;background:var(--line);color:var(--sub)}
+.meta .src.t1{background:var(--accent);color:#fff}
+.meta .src.t2,.meta .src.t3{background:var(--chip);color:var(--accent)}
+.meta .warn{color:#b26a00;font-weight:700}
+.pastbox{margin-top:14px}
+.pastbox summary{color:var(--sub);font-weight:700;cursor:pointer;padding:6px 0}
+.evd small:first-child{display:block}
 .evlink{display:inline-block;margin-top:8px;color:var(--accent);font-weight:700;font-size:.82rem;text-decoration:none}
+.nx{display:grid;grid-template-columns:3.2em 1fr auto;gap:8px;align-items:center;margin-top:8px;font-size:.88rem}
+.nx b{color:var(--accent)}
+.nx .src{border-radius:6px;padding:1px 6px;font-weight:700;font-size:.7rem;background:var(--line);color:var(--sub)}
+.nx .src.t1{background:var(--accent);color:#fff}
 .cbar{display:grid;grid-template-columns:9.6em 1fr 3.2em;gap:8px;align-items:center;margin-top:8px;font-size:.82rem}
 .cbar .cn{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cbar .ct{display:block;height:12px}
@@ -240,7 +251,13 @@ function renderDash() {
       <span class="ct"><span class="cf" style="width:${Math.max(3, c / maxC * 100)}%"></span></span>
       <span class="cv">${c}件</span></div>`).join("")}
     <div class="sub">記事の言語・配信地域で数えています（台湾・香港は中国語、英語圏はアメリカ・シンガポール・フィリピンなど）。日本のメディアは ${d30.length - abroad30.length}件。</div></div>` : "";
-  el.innerHTML = `<h2 class="sec">${DASH_NAME} ダッシュボード</h2><div class="dash">${fcTile}${ytTile}${newsTile}${abroadTile}${countryTile}
+  const next = upcomingEvents().filter(e => e.date).slice(0, 3);
+  const nextTile = `<div class="tile wide"><div class="lb">🗓 次の予定</div>
+    ${next.length ? next.map(e => `<div class="nx"><b>${Number(e.date.slice(5, 7))}/${Number(e.date.slice(8))}</b>
+      <span>${KIND_ICON[e.kind] || "📌"} ${esc(e.title)}</span><span class="src t${e.tier}">${esc(e.label)}</span></div>`).join("")
+      : `<div class="sub">日付の決まった予定はまだありません</div>`}
+    <button class="pbtn ghost" data-goto="events">予定をすべて見る</button></div>`;
+  el.innerHTML = `<h2 class="sec">${DASH_NAME} ダッシュボード</h2><div class="dash">${nextTile}${fcTile}${ytTile}${newsTile}${abroadTile}${countryTile}
     <div class="tile wide" id="push"></div></div>`;
   renderPush();
 }
@@ -398,25 +415,32 @@ function renderNews() {
 // ---- イベント
 const KIND_ICON = {ライブ: "🎤", イベント: "🎉", 出演: "📺", オフ会: "🤝", その他: "📌"};
 let evFilter = "all";
+const localToday = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
+// これからの予定（日付順・同じ日なら信頼度の高い情報源が先）と、終わった予定に分ける
+const upcomingEvents = () => (data.events || []).filter(e => !e.date || e.date >= localToday());
+const pastEvents = () => (data.events || []).filter(e => e.date && e.date < localToday()).reverse();
+
+function eventCard(e) {
+  const past = e.date && e.date < localToday();
+  const d = e.date ? new Date(e.date + "T00:00:00") : null;
+  return `<div class="card ev${past ? " past" : ""}">
+    <div class="evd">${d ? `<small>${d.getFullYear()}</small><b>${d.getMonth() + 1}/${d.getDate()}</b><small>${"日月火水木金土"[d.getDay()]}</small>` : `<small>日付<br>未定</small>`}</div>
+    <div class="evb"><div class="t">${KIND_ICON[e.kind] || "📌"} ${esc(e.title)}</div>
+      <div class="meta"><span class="src t${e.tier}">${esc(e.label)}</span>${e.region === "海外" ? `<span class="chip">🌏 海外</span>` : ""}
+        ${e.place ? `<span>📍 ${esc(e.place)}</span>` : ""}${e.date_text ? `<span>${esc(e.date_text)}</span>` : ""}
+        ${e.date && !e.year_certain ? `<span class="warn">年は要確認</span>` : ""}${past ? `<span>終了</span>` : ""}</div>
+      <a class="evlink" href="${esc(e.url)}" target="_blank" rel="noopener">情報元を見る ›</a></div></div>`;
+}
+
 function renderEvents() {
-  const all = data.events || [];
-  const today = new Date().toISOString().slice(0, 10);
-  const kinds = ["all", ...Object.keys(KIND_ICON).filter(k => all.some(e => e.kind === k))];
-  const items = all.filter(e => evFilter === "all" || e.kind === evFilter);
-  const card = e => {
-    const past = e.date && e.date < today;
-    const d = e.date ? new Date(e.date + "T00:00:00") : null;
-    return `<div class="card ev${past ? " past" : ""}">
-      <div class="evd">${d ? `<b>${d.getMonth() + 1}/${d.getDate()}</b><small>${"日月火水木金土"[d.getDay()]}</small>` : `<small>日付<br>未定</small>`}</div>
-      <div class="evb"><div class="t">${KIND_ICON[e.kind] || "📌"} ${esc(e.title)}</div>
-        <div class="meta">${e.region === "海外" ? `<span class="chip">🌏 海外</span>` : ""}${e.place ? `<span>📍 ${esc(e.place)}</span>` : ""}
-          ${e.date_text ? `<span>${esc(e.date_text)}</span>` : ""}${past ? `<span>終了</span>` : ""}</div>
-        <a class="evlink" href="${esc(e.url)}" target="_blank" rel="noopener">情報元を見る ›</a></div></div>`;
-  };
-  document.getElementById("events").innerHTML = `<h2 class="sec">🎤 イベント情報</h2>
+  const up = upcomingEvents(), past = pastEvents();
+  const kinds = ["all", ...Object.keys(KIND_ICON).filter(k => up.some(e => e.kind === k))];
+  const items = up.filter(e => evFilter === "all" || e.kind === evFilter);
+  document.getElementById("events").innerHTML = `<h2 class="sec">🎤 これからの予定</h2>
     <div class="filters">${kinds.map(k => `<button data-ev="${k}" class="${k === evFilter ? "on" : ""}">${k === "all" ? "すべて" : KIND_ICON[k] + " " + k}</button>`).join("")}</div>
-    ${items.length ? items.map(card).join("") : `<div class="empty">まだイベント情報はありません<br>ニュースや公式のお知らせから自動で集めます</div>`}
-    <p class="note">ライブ・イベント・出演・オフ会の予定を、ニュースや公式のお知らせから AI が読み取っています。日時や場所は必ず情報元で確かめてください。</p>`;
+    ${items.length ? items.map(eventCard).join("") : `<div class="empty">これからの予定はまだ見つかっていません<br>公式・番組表・ニュースから自動で集めます</div>`}
+    ${past.length ? `<details class="pastbox"><summary>過去の出来事（${past.length}件）</summary>${past.map(eventCard).join("")}</details>` : ""}
+    <p class="note">公式（STARTO・公式サイト・ソニーミュージック）→ 番組表 → 映画・ドラマ情報 → ニュース・ライブ情報 → まとめ の順に信頼度が高く、同じ予定は信頼度の高い情報源を表示しています。AI が読み取っているため、日時や場所は必ず情報元で確かめてください。</p>`;
 }
 
 function spark(points) {
@@ -528,6 +552,8 @@ document.addEventListener("click", e => {
   }
   const rk = e.target.closest("[data-rank]");
   if (rk) { rankBy = rk.dataset.rank; renderFanclub(); }
+  const go = e.target.closest("[data-goto]");
+  if (go) document.querySelector(`[data-tab="${go.dataset.goto}"]`).click();
   const evb = e.target.closest("[data-ev]");
   if (evb) { evFilter = evb.dataset.ev; renderEvents(); }
   const f = e.target.closest("[data-f]");
