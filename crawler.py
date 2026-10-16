@@ -249,10 +249,13 @@ def main() -> int:
              for lang, q, hl, gl, ceid in SOURCES]
     feeds += [(lang, f"Bing {mkt}", bing_url(q, mkt), parse_bing_rss) for lang, q, mkt in BING_SOURCES]
     for lang, name, url, parser in feeds:
+        body = b""
         try:
-            items = parser(fetch(url), lang)
+            body = fetch(url)
+            items = parser(body, lang)
         except Exception as e:  # 1つの取得元が失敗しても他は続ける
-            print(f"[{name}] 取得に失敗しました: {e}", file=sys.stderr)
+            # 原因を調べられるよう、受け取った内容の先頭も残す
+            print(f"[{name}] 取得に失敗しました: {e} / 先頭: {body[:120]!r}", file=sys.stderr)
             continue
         added = save(conn, items)
         total += len(items)
