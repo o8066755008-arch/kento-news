@@ -50,7 +50,10 @@ SCHEMA = {
     "additionalProperties": False,
 }
 
-LANG_LABEL = {"ja": "日本のメディア", "ko": "韓国のメディア", "en": "英語圏のメディア"}
+LANG_LABEL = {"ja": "日本のメディア", "ko": "韓国のメディア", "en": "英語圏のメディア",
+              "zh": "台湾・香港のメディア", "th": "タイのメディア", "vi": "ベトナムのメディア",
+              "id": "インドネシアのメディア", "es": "中南米のメディア", "pt": "ブラジルのメディア",
+              "fr": "フランスのメディア"}
 
 
 def recent_articles(conn, now: datetime) -> list[dict]:

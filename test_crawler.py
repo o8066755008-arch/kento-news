@@ -7,11 +7,20 @@ from unittest import mock
 import build_site
 import crawler
 import digest
+import thumbnails
 import fanclub
 
 SAMPLE = """<?xml version="1.0"?><rss><channel>
 <item><title>테스트 제목 - 테스트일보</title><link>https://example.com/a</link>
 <pubDate>Wed, 15 Oct 2026 10:00:00 GMT</pubDate><source url="https://example.com">테스트일보</source></item>
+</channel></rss>""".encode()
+
+
+BING = """<?xml version="1.0"?><rss xmlns:News="https://www.bing.com/news/search?q=x&amp;format=rss"><channel>
+<item><title>테스트 제목</title>
+<link>http://www.bing.com/news/apiclick.aspx?ref=FexRss&amp;aid=&amp;url=https%3a%2f%2fnews.example.kr%2fa1&amp;c=1</link>
+<pubDate>Wed, 15 Oct 2026 12:00:00 GMT</pubDate><News:Source>예시뉴스</News:Source>
+<News:Image>http://www.bing.com/th?id=OVFT.abc&amp;pid=News</News:Image></item>
 </channel></rss>""".encode()
 
 
@@ -89,6 +98,26 @@ class CrawlerTest(unittest.TestCase):
             d = digest.build_digest(articles)
         self.assertEqual(len(d["topics"]), 1)
         self.assertEqual(d["topics"][0]["articles"][0]["link"], "https://example.com/a")
+
+    def test_bing_gives_real_url_and_https_image(self):
+        it = crawler.parse_bing_rss(BING, "ko")[0]
+        self.assertEqual(it["link"], "https://news.example.kr/a1")
+        self.assertEqual(it["image"], "https://www.bing.com/th?id=OVFT.abc&pid=News")
+        self.assertEqual(it["source"], "예시뉴스")
+
+    def test_same_headline_from_two_sources_is_saved_once_with_image(self):
+        google = crawler.parse_rss(SAMPLE, "ko")   # 「테스트 제목」画像なし
+        self.assertEqual(crawler.save(self.conn, google), 1)
+        self.assertEqual(crawler.save(self.conn, crawler.parse_bing_rss(BING, "ko")), 0)
+        rows = self.conn.execute("SELECT link, image FROM articles").fetchall()
+        self.assertEqual(rows, [("https://example.com/a", "https://www.bing.com/th?id=OVFT.abc&pid=News")])
+
+    def test_find_image(self):
+        page = '<head><meta content="/img/a.jpg?x=1&amp;y=2" property="og:image"></head>'
+        self.assertEqual(thumbnails.find_image(page, "https://site.example/news/1"),
+                         "https://site.example/img/a.jpg?x=1&y=2")
+        self.assertIsNone(thumbnails.find_image('<meta property="og:image" content="http://a/b.jpg">', "http://a/"))
+        self.assertIsNone(thumbnails.find_image("<head></head>", "https://a/"))
 
     def test_is_group_channel(self):
         self.assertTrue(fanclub.is_group_channel("timelesz", "timelesz [タイムレス]"))

@@ -28,6 +28,9 @@ main{max-width:720px;margin:0 auto;padding:12px 16px calc(24px + env(safe-area-i
 .card a.cover{color:inherit;text-decoration:none;display:block}
 .card a.cover::after{content:"";position:absolute;inset:0}
 .card{position:relative}
+.card.news{display:flow-root}
+.card .thumb{float:right;width:96px;height:96px;object-fit:cover;border-radius:10px;margin:0 0 6px 12px;background:var(--line)}
+.topic .hero{display:block;width:calc(100% + 28px);margin:-14px -14px 12px;aspect-ratio:5/2;object-fit:cover;border-radius:14px 14px 0 0;background:var(--line)}
 .meta a.orig{position:relative;z-index:1;color:var(--accent);margin-left:auto}
 .card .o{color:var(--sub);font-size:.8rem;margin-top:6px;line-height:1.4}
 .meta{display:flex;gap:8px;align-items:center;color:var(--sub);font-size:.78rem;margin-top:8px;flex-wrap:wrap}
@@ -74,7 +77,11 @@ svg.spark{width:100%;height:46px;margin-top:6px}
   <section id="fanclub" hidden></section>
 </main>
 <script>
-const LANG = {all: "すべて", ja: "日本", ko: "韓国", en: "海外（英語）"};
+const LANG = {all: "すべて", ja: "日本", ko: "韓国", zh: "台湾・香港", th: "タイ", vi: "ベトナム",
+  id: "インドネシア", en: "英語圏", es: "中南米", pt: "ブラジル", fr: "フランス"};
+const FLAG = {ja: "🇯🇵", ko: "🇰🇷", zh: "🇹🇼", th: "🇹🇭", vi: "🇻🇳", id: "🇮🇩", en: "🌐", es: "🇲🇽", pt: "🇧🇷", fr: "🇫🇷"};
+// 画像が読み込めないときは枠ごと消す
+const thumb = (url, cls) => url ? `<img class="${cls}" src="${esc(url)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : "";
 let data = {news: [], fanclub: {}}, filter = "all";
 
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -96,25 +103,27 @@ function renderDigest() {
     if (!topics.length) return "";
     return `<h3 class="region">${region === "国内" ? "🇯🇵 国内" : "🌏 海外"}</h3>` + topics.map(t => `
       <details class="card topic">
-        <summary><div class="t">${esc(t.title)}</div>
+        <summary>${thumb((t.articles.find(a => a.image) || {}).image, "hero")}<div class="t">${esc(t.title)}</div>
           <div class="o">${esc(t.summary)}</div>
           <div class="meta"><span class="chip">記事 ${t.articles.length} 件</span><span class="more">タップで記事を見る</span></div></summary>
         <ul>${t.articles.map(a => `<li><a href="${esc(openUrl(a))}" target="_blank" rel="noopener">${esc(a.title)}</a>
-          <span class="src">${a.lang !== "ja" ? LANG[a.lang] + " ・ " : ""}${esc(a.source)} ・ ${fmtDate(a.published)}</span></li>`).join("")}</ul>
+          <span class="src">${a.lang !== "ja" ? (FLAG[a.lang] || "") + " " + (LANG[a.lang] || a.lang) + " ・ " : ""}${esc(a.source)} ・ ${fmtDate(a.published)}</span></li>`).join("")}</ul>
       </details>`).join("");
   }).join("") + `<p class="note">見出しをもとに AI がまとめています（${esc(d.generated)} 作成）。詳しくは各記事をご覧ください。</p>`;
 }
 
 function renderNews() {
   renderDigest();
-  document.getElementById("filters").innerHTML = Object.entries(LANG).map(([k, v]) =>
+  const present = new Set(data.news.map(n => n.lang));
+  document.getElementById("filters").innerHTML = Object.entries(LANG).filter(([k]) => k === "all" || present.has(k)).map(([k, v]) =>
     `<button data-f="${k}" class="${k === filter ? "on" : ""}">${v}</button>`).join("");
   const items = data.news.filter(n => filter === "all" || n.lang === filter);
   document.getElementById("list").innerHTML = items.length ? items.map(n => `
-    <div class="card">
+    <div class="card news">
+      ${thumb(n.image, "thumb")}
       <a class="cover" href="${esc(openUrl(n))}" target="_blank" rel="noopener"><div class="t">${esc(n.title)}</div></a>
       ${n.original ? `<div class="o">${n.translated ? "原文: " : "（翻訳待ち）"}${esc(n.original)}</div>` : ""}
-      <div class="meta">${n.lang !== "ja" ? `<span class="chip">${LANG[n.lang]}</span>` : ""}
+      <div class="meta">${n.lang !== "ja" ? `<span class="chip">${FLAG[n.lang] || ""} ${LANG[n.lang] || n.lang}</span>` : ""}
         <span>${esc(n.source)}</span><span>${fmtDate(n.published)}</span>
         ${n.lang !== "ja" ? `<a class="orig" href="${esc(n.link)}" target="_blank" rel="noopener">原文で開く</a>` : ""}</div>
     </div>`).join("") : `<div class="empty">ニュースはまだありません</div>`;

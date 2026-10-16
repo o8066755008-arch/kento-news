@@ -1,12 +1,13 @@
 """中島健人さんの国内・海外ニュースを集めるクローラー。
 
-ニュース配信用の RSS（Google ニュース検索）を日本・韓国・英語圏の3地域で読み、
-見出し・配信元・日時・リンクだけを保存する（記事本文はコピーしない）。
-海外の見出しは translate.py で日本語にする。
+ニュース配信用の RSS（Google ニュース検索・Bing ニュース検索）を各国の版で読み、
+見出し・配信元・日時・リンク・サムネイル画像の URL だけを保存する（記事本文はコピーしない）。
+海外の見出しは translate.py で日本語にし、サムネイルは thumbnails.py で補う。
 
 使い方:
     python3 crawler.py
 """
+import re
 import sqlite3
 import sys
 import urllib.parse
@@ -21,11 +22,33 @@ BASE_DIR = Path(__file__).resolve().parent
 DB_PATH = BASE_DIR / "data.db"
 USER_AGENT = "kento-news-crawler/0.2 (personal use)"
 
-# (言語, 検索語, hl, gl, ceid)
+# 名前の表記ゆれ。英語表記は姓名の順が両方使われる
+EN_QUERY = '"Kento Nakajima" OR "Nakajima Kento"'
+
+# Google ニュース: (言語, 検索語, hl, gl, ceid)
 SOURCES = [
     ("ja", "中島健人", "ja", "JP", "JP:ja"),
     ("ko", "나카지마 켄토", "ko", "KR", "KR:ko"),
-    ("en", "Kento Nakajima", "en-US", "US", "US:en"),
+    ("en", EN_QUERY, "en-US", "US", "US:en"),
+    ("en", EN_QUERY, "en-SG", "SG", "SG:en"),
+    ("en", EN_QUERY, "en-PH", "PH", "PH:en"),
+    ("zh", "中島健人 OR 中岛健人", "zh-TW", "TW", "TW:zh-Hant"),
+    ("zh", "中島健人 OR 中岛健人", "zh-HK", "HK", "HK:zh-Hant"),
+    ("th", f"นากาจิมะ เคนโตะ OR {EN_QUERY}", "th", "TH", "TH:th"),
+    ("vi", EN_QUERY, "vi", "VN", "VN:vi"),
+    ("id", EN_QUERY, "id", "ID", "ID:id"),
+    ("es", EN_QUERY, "es-419", "MX", "MX:es-419"),
+    ("pt", EN_QUERY, "pt-BR", "BR", "BR:pt-419"),
+    ("fr", EN_QUERY, "fr", "FR", "FR:fr"),
+]
+
+# Bing ニュース: (言語, 検索語, market)。リンクが記事に直接つながり、サムネイルも付く
+BING_SOURCES = [
+    ("ja", "中島健人", "ja-JP"),
+    ("ko", "나카지마 켄토", "ko-KR"),
+    ("en", EN_QUERY, "en-US"),
+    ("zh", "中島健人", "zh-TW"),
+    ("th", "Kento Nakajima", "th-TH"),
 ]
 
 
@@ -64,6 +87,39 @@ def parse_rss(xml_bytes: bytes, lang: str = "ja") -> list[dict]:
     return items
 
 
+def bing_url(query: str, market: str) -> str:
+    q = urllib.parse.quote(query)
+    return f"https://www.bing.com/news/search?q={q}&format=rss&setmkt={market}&setlang={market}"
+
+
+def parse_bing_rss(xml_bytes: bytes, lang: str) -> list[dict]:
+    root = ET.fromstring(xml_bytes)
+    items = []
+    for item in root.iter("item"):
+        extra = {el.tag.split("}")[-1]: (el.text or "").strip() for el in item}
+        title = extra.get("title", "")
+        link = extra.get("link", "")
+        # Bing のリンクはクリック計測用。url= の部分が記事の URL
+        real = urllib.parse.parse_qs(urllib.parse.urlparse(link).query).get("url", [link])[0]
+        try:
+            published = parsedate_to_datetime(extra["pubDate"]).isoformat() if extra.get("pubDate") else ""
+        except (TypeError, ValueError):
+            published = ""
+        if title and real.startswith("http"):
+            items.append({
+                "title": title, "link": real, "source": extra.get("Source", ""),
+                "published": published, "lang": lang,
+                "title_ja": title if lang == "ja" else None,
+                "image": re.sub(r"^http://", "https://", extra.get("Image", "")) or None,
+            })
+    return items
+
+
+def title_key(title: str) -> str:
+    """同じ記事が Google と Bing の両方から来たときに見分けるための見出しの正規化。"""
+    return re.sub(r"[\s\W_]+", "", title).lower()[:60]
+
+
 def open_db(path: Path = DB_PATH) -> sqlite3.Connection:
     conn = sqlite3.connect(path)
     conn.execute(
@@ -77,6 +133,13 @@ def open_db(path: Path = DB_PATH) -> sqlite3.Connection:
             fetched_at TEXT DEFAULT (datetime('now', 'localtime'))
         )"""
     )
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(articles)")}
+    for col, decl in [("image", "TEXT"), ("title_key", "TEXT"), ("image_tried", "INTEGER DEFAULT 0")]:
+        if col not in cols:
+            conn.execute(f"ALTER TABLE articles ADD COLUMN {col} {decl}")
+    missing = conn.execute("SELECT link, title FROM articles WHERE title_key IS NULL").fetchall()
+    conn.executemany("UPDATE articles SET title_key = ? WHERE link = ?",
+                     [(title_key(t), link) for link, t in missing])
     # 会員数まわりの数値。metric は official（公式発表）/ member_no（ファン投稿の会員番号）
     # / youtube（登録者数）/ spotify（フォロワー数）
     conn.execute(
@@ -96,45 +159,63 @@ def open_db(path: Path = DB_PATH) -> sqlite3.Connection:
 
 
 def save(conn: sqlite3.Connection, items: list[dict]) -> int:
-    before = conn.total_changes
-    conn.executemany(
-        "INSERT OR IGNORE INTO articles (link, title, title_ja, lang, source, published) "
-        "VALUES (:link, :title, :title_ja, :lang, :source, :published)",
-        items,
-    )
+    """新しい記事を保存する。同じ見出しの記事がすでにあれば、画像だけ補って保存しない。"""
+    added = 0
+    for it in items:
+        key = title_key(it["title"])
+        row = conn.execute("SELECT link, image FROM articles WHERE link = ? OR title_key = ?",
+                           (it["link"], key)).fetchone()
+        if row:
+            if it.get("image") and not row[1]:
+                conn.execute("UPDATE articles SET image = ? WHERE link = ?", (it["image"], row[0]))
+            continue
+        conn.execute(
+            "INSERT INTO articles (link, title, title_ja, lang, source, published, image, title_key) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            (it["link"], it["title"], it["title_ja"], it["lang"], it["source"], it["published"],
+             it.get("image"), key),
+        )
+        added += 1
     conn.commit()
-    return conn.total_changes - before
+    return added
 
 
-def translate_pending(conn: sqlite3.Connection) -> int:
+def translate_pending(conn: sqlite3.Connection, batch: int = 80, limit: int = 400) -> int:
+    """翻訳待ちの見出しを batch 件ずつ翻訳する（1回の応答が長くなりすぎないように）。"""
     rows = conn.execute(
-        "SELECT link, title FROM articles WHERE title_ja IS NULL ORDER BY published DESC LIMIT 300"
+        "SELECT link, title FROM articles WHERE title_ja IS NULL ORDER BY published DESC LIMIT ?",
+        (limit,),
     ).fetchall()
-    if not rows:
-        return 0
-    translated = translate.to_japanese([title for _, title in rows])
-    if not translated:
-        return 0
-    conn.executemany(
-        "UPDATE articles SET title_ja = ? WHERE link = ?",
-        [(ja, link) for (link, _), ja in zip(rows, translated)],
-    )
-    conn.commit()
-    return len(translated)
+    done = 0
+    for i in range(0, len(rows), batch):
+        chunk = rows[i:i + batch]
+        translated = translate.to_japanese([title for _, title in chunk])
+        if not translated:
+            break
+        conn.executemany(
+            "UPDATE articles SET title_ja = ? WHERE link = ?",
+            [(ja, link) for (link, _), ja in zip(chunk, translated)],
+        )
+        conn.commit()
+        done += len(translated)
+    return done
 
 
 def main() -> int:
     conn = open_db()
     total = 0
-    for lang, query, hl, gl, ceid in SOURCES:
+    feeds = [(lang, f"Google {gl}", feed_url(q, hl, gl, ceid), parse_rss)
+             for lang, q, hl, gl, ceid in SOURCES]
+    feeds += [(lang, f"Bing {mkt}", bing_url(q, mkt), parse_bing_rss) for lang, q, mkt in BING_SOURCES]
+    for lang, name, url, parser in feeds:
         try:
-            items = parse_rss(fetch(feed_url(query, hl, gl, ceid)), lang)
-        except Exception as e:  # 1地域が失敗しても他は続ける
-            print(f"[{lang}] 取得に失敗しました: {e}", file=sys.stderr)
+            items = parser(fetch(url), lang)
+        except Exception as e:  # 1つの取得元が失敗しても他は続ける
+            print(f"[{name}] 取得に失敗しました: {e}", file=sys.stderr)
             continue
         added = save(conn, items)
         total += len(items)
-        print(f"[{lang}] 取得 {len(items)} 件 / 新規 {added} 件")
+        print(f"[{name}] 取得 {len(items)} 件 / 新規 {added} 件")
     print(f"翻訳 {translate_pending(conn)} 件")
     return 0 if total else 1
 
