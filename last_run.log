@@ -1,3 +1,4 @@
+[Bing ko-KR] 取得に失敗しました: not well-formed (invalid token): line 1, column 41 / 先頭: b'<!DOCTYPE html><html xml:lang="en" xmlns=http://www.w3.org/1999/xhtml xmlns:Web=http://schemas.live.com/Web><head><meta '
 重複の整理 0 件
 [Google JP] 取得 100 件 / 新規 0 件
 [Google KR] 取得 60 件 / 新規 0 件
@@ -9,36 +10,43 @@
 [Google TH] 取得 35 件 / 新規 0 件
 [Google VN] 取得 9 件 / 新規 0 件
 [Google ID] 取得 51 件 / 新規 0 件
-[Google MX] 取得 30 件 / 新規 0 件
+[Google MX] 取得 29 件 / 新規 0 件
 [Google BR] 取得 22 件 / 新規 0 件
 [Google FR] 取得 14 件 / 新規 0 件
 [Bing ja-JP] 取得 12 件 / 新規 0 件
-[Bing ko-KR] 取得 10 件 / 新規 0 件
 [Bing en-US] 取得 9 件 / 新規 0 件
 [Bing zh-TW] 取得 12 件 / 新規 0 件
-[Bing th-TH] 取得 11 件 / 新規 0 件
+[Bing th-TH] 取得 12 件 / 新規 0 件
 翻訳 0 件
-[サムネイル] 80 件を確認 / 画像あり 0 件
+[サムネイル] 21 件を確認 / 画像あり 1 件
 [トピックス] 記事に変化がないため前回のまとめを使います
-[Wikipedia] 会員数の記述に変化はありません
+[イベント] 出演 10月26日開幕 第39回東京国際映画祭（フェスティバル・ナビゲーター）（東京）
+[イベント] 出演 日付未定 『アニメが地球を喰っている』第2弾（MC）（場所未定）
+[イベント] 出演 日付未定 「超タッグ祭」VTR出演（場所未定）
+[イベント] ニュース 69 件を確認 / 新しい予定 3 件
+[イベント] https://www.sonymusic.co.jp/artist/KentoNakajima/info/: 本文 77 文字 / 日付のある部分 0 文字
+[イベント] https://twipla.jp/search?keyword=%E4%B8%AD%E5%B3%B6%E5%81%A5%E4%BA%BA: 本文 1180 文字 / 日付のある部分 709 文字
+[イベント] https://twipla.jp/search?keyword=%E4%B8%AD%E5%B3%B6%E5%81%A5%E4%BA%BA から新しい予定 0 件
+[ニュース] 会員数の新しい記事はありません
 [YouTube] A.B.C-Z の公式チャンネルが見つかりません。groups.json に ID を書いてください
 [YouTube] 20th Century の公式チャンネルが見つかりません。groups.json に ID を書いてください
-[YouTube] Travis Japan 677,000 人（Travis Japan）
-[YouTube] Snow Man 4,440,000 人（Snow Man）
-[YouTube] なにわ男子 1,900,000 人（なにわ男子）
-[YouTube] NEWS 293,000 人（にゅうちゅうぶ | NEWS official）
-[YouTube] 嵐 3,880,000 人（ARASHI）
-[YouTube] WEST. 916,000 人（WEST.）
-[YouTube] Aぇ! group 653,000 人（Aぇ! group）
-[YouTube] timelesz 1,230,000 人（timelesz [タイムレス]）
-[YouTube] 中島健人 258,000 人（中島健人 Official YouTube Channel）
-[YouTube] 木村拓哉 2,420,000 人（木村拓哉）
-[YouTube] Kis-My-Ft2 863,000 人（Kis-My-Ft2）
-[YouTube] SixTONES 2,730,000 人（SixTONES）
 [YouTube] Hey! Say! JUMP 896,000 人（Hey! Say! JUMP）
+[YouTube] なにわ男子 1,900,000 人（なにわ男子）
+[YouTube] timelesz 1,230,000 人（timelesz [タイムレス]）
+[YouTube] Aぇ! group 653,000 人（Aぇ! group）
+[YouTube] 木村拓哉 2,420,000 人（木村拓哉）
+[YouTube] 中島健人 258,000 人（中島健人 Official YouTube Channel）
+[YouTube] SixTONES 2,730,000 人（SixTONES）
+[YouTube] NEWS 293,000 人（にゅうちゅうぶ | NEWS official）
+[YouTube] Travis Japan 677,000 人（Travis Japan）
 [YouTube] King & Prince 1,880,000 人（King & Prince）
+[YouTube] Kis-My-Ft2 863,000 人（Kis-My-Ft2）
+[YouTube] WEST. 916,000 人（WEST.）
+[YouTube] 嵐 3,880,000 人（ARASHI）
+[YouTube] Snow Man 4,440,000 人（Snow Man）
 [Spotify] SPOTIFY_CLIENT_ID / SPOTIFY_CLIENT_SECRET が未設定です
-[ページ] https://snowman-information.com/johnnys-fc/: 本文 2333 文字 / 会員数らしい部分 1444 文字
+[Wikipedia] 会員数の記述に変化はありません
+[ページ] https://snowman-information.com/johnnys-fc/: 本文 2314 文字 / 会員数らしい部分 1450 文字
 [推計] Snow Man 1,942,000 人（2026-10-10）: Snow Man 1,942,000
 [推計] King & Prince 1,160,000 人（2026-10-10）: King & Prince 1,160,000
 [推計] SixTONES 1,130,000 人（2026-10-10）: SixTONES 1,130,000
@@ -86,6 +94,11 @@
 [手動] timelesz の official を削除（公式発表の出典を確認できないため。報道・推計として扱う）
 [会員番号] フォームの回答を読み込みました（有効な回答 0 件）
 ニュース 599 件 / ファンクラブ 22 グループ → site/data.json
-[通知] 知らせる変化はありません
+[通知] 送れませんでした: 410 （通知の登録が切れています。アプリでもう一度オンにしてください）
+[通知] 3 件の変化:
+🎤 10月26日開幕 第39回東京国際映画祭（フェスティバル・ナビゲーター）
+🎤 日付未定 『アニメが地球を喰っている』第2弾（MC）
+🎤 日付未定 「超タッグ祭」VTR出演
 [通知] 送りました
+[通知] 送れませんでした: 410 （通知の登録が切れています。アプリでもう一度オンにしてください）
 [通知] 送りました
