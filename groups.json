@@ -1,18 +1,78 @@
 {
-  "fan_form_url": "",
-  "fan_form_csv_url": "",
+  "fan_form_url": "https://forms.gle/n3co5Qmg4j5Ebv7Y8",
+  "fan_form_csv_url": "https://docs.google.com/spreadsheets/d/1gFxL2t1PqH_9gFx0bqVlxn3UrpatZ62MEnOxxO9sR8o/export?format=csv",
   "groups": [
-    {"name": "Snow Man", "wikipedia": "Snow Man", "youtube_channel_id": "", "spotify_artist_id": ""},
-    {"name": "SixTONES", "wikipedia": "SixTONES", "youtube_channel_id": "", "spotify_artist_id": ""},
-    {"name": "King & Prince", "wikipedia": "King & Prince", "youtube_channel_id": "", "spotify_artist_id": ""},
-    {"name": "なにわ男子", "wikipedia": "なにわ男子", "youtube_channel_id": "", "spotify_artist_id": ""},
-    {"name": "timelesz", "wikipedia": "timelesz", "youtube_channel_id": "", "spotify_artist_id": ""},
-    {"name": "Travis Japan", "wikipedia": "Travis Japan", "youtube_channel_id": "", "spotify_artist_id": ""},
-    {"name": "Hey! Say! JUMP", "wikipedia": "Hey! Say! JUMP", "youtube_channel_id": "", "spotify_artist_id": ""},
-    {"name": "Kis-My-Ft2", "wikipedia": "Kis-My-Ft2", "youtube_channel_id": "", "spotify_artist_id": ""},
-    {"name": "NEWS", "wikipedia": "NEWS (グループ)", "youtube_channel_id": "", "spotify_artist_id": ""},
-    {"name": "SUPER EIGHT", "wikipedia": "SUPER EIGHT", "youtube_channel_id": "", "spotify_artist_id": ""},
-    {"name": "WEST.", "wikipedia": "WEST.", "youtube_channel_id": "", "spotify_artist_id": ""},
-    {"name": "Aぇ! group", "wikipedia": "Aぇ! group", "youtube_channel_id": "", "spotify_artist_id": ""}
+    {
+      "name": "Snow Man",
+      "wikipedia": "Snow Man",
+      "youtube_channel_id": "",
+      "spotify_artist_id": ""
+    },
+    {
+      "name": "SixTONES",
+      "wikipedia": "SixTONES",
+      "youtube_channel_id": "",
+      "spotify_artist_id": ""
+    },
+    {
+      "name": "King & Prince",
+      "wikipedia": "King & Prince",
+      "youtube_channel_id": "",
+      "spotify_artist_id": ""
+    },
+    {
+      "name": "なにわ男子",
+      "wikipedia": "なにわ男子",
+      "youtube_channel_id": "",
+      "spotify_artist_id": ""
+    },
+    {
+      "name": "timelesz",
+      "wikipedia": "timelesz",
+      "youtube_channel_id": "",
+      "spotify_artist_id": ""
+    },
+    {
+      "name": "Travis Japan",
+      "wikipedia": "Travis Japan",
+      "youtube_channel_id": "",
+      "spotify_artist_id": ""
+    },
+    {
+      "name": "Hey! Say! JUMP",
+      "wikipedia": "Hey! Say! JUMP",
+      "youtube_channel_id": "",
+      "spotify_artist_id": ""
+    },
+    {
+      "name": "Kis-My-Ft2",
+      "wikipedia": "Kis-My-Ft2",
+      "youtube_channel_id": "",
+      "spotify_artist_id": ""
+    },
+    {
+      "name": "NEWS",
+      "wikipedia": "NEWS (グループ)",
+      "youtube_channel_id": "",
+      "spotify_artist_id": ""
+    },
+    {
+      "name": "SUPER EIGHT",
+      "wikipedia": "SUPER EIGHT",
+      "youtube_channel_id": "",
+      "spotify_artist_id": ""
+    },
+    {
+      "name": "WEST.",
+      "wikipedia": "WEST.",
+      "youtube_channel_id": "",
+      "spotify_artist_id": ""
+    },
+    {
+      "name": "Aぇ! group",
+      "wikipedia": "Aぇ! group",
+      "youtube_channel_id": "",
+      "spotify_artist_id": ""
+    }
   ]
 }

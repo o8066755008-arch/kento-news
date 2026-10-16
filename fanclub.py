@@ -264,7 +264,12 @@ def crawl_fan_reports(conn, config: dict) -> None:
         print(f"[会員番号] 取得に失敗しました: {e}", file=sys.stderr)
         return
     names = [g["name"] for g in config["groups"]]
+    if text.lstrip().startswith("<"):
+        print("[会員番号] CSV ではなくページが返ってきました。スプレッドシートの共有設定を確認してください",
+              file=sys.stderr)
+        return
     reports = parse_fan_csv(text, names)
+    print(f"[会員番号] フォームの回答を読み込みました（有効な回答 {len(reports)} 件）")
     for grp, days in estimate_member_no(reports).items():
         for day, value, n in days:
             record(conn, grp, "member_no", value, f"ファン投稿 {n} 件", day)
