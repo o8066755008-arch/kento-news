@@ -1,6 +1,9 @@
 {
   "fan_form_url": "https://forms.gle/n3co5Qmg4j5Ebv7Y8",
   "fan_form_csv_url": "https://docs.google.com/spreadsheets/d/1gFxL2t1PqH_9gFx0bqVlxn3UrpatZ62MEnOxxO9sR8o/export?format=csv",
+  "watch_pages": [
+    "https://snowman-information.com/johnnys-fc/"
+  ],
   "groups": [
     {
       "name": "Snow Man",

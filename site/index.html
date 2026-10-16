@@ -226,7 +226,7 @@ function spark(points) {
 
 const METRICS = [
   {key: "official", label: "公式発表の会員数", unit: "人", note: "ニュース・Wikipedia から"},
-  {key: "press", label: "報道での推定会員数", unit: "人", note: "ニュース・Wikipedia から"},
+  {key: "press", label: "報道・まとめサイトの会員数（推定）", unit: "人", note: "ニュース・Wikipedia から"},
   {key: "member_no", label: "最新の会員番号（推定）", unit: "番台", note: "ファンの投稿から", masked: true},
   {key: "youtube", label: "YouTube 登録者数", unit: "人", note: "毎日記録", daily: true},
   {key: "spotify", label: "Spotify フォロワー数", unit: "人", note: "毎日記録", daily: true},
@@ -268,7 +268,7 @@ function renderRanking() {
     <div class="seg"><button data-rank="fc" class="${rankBy === "fc" ? "on" : ""}">FC会員数</button>
       <button data-rank="yt" class="${rankBy === "yt" ? "on" : ""}">YouTube登録者</button></div>
     ${bars || `<div class="note">まだデータがありません</div>`}
-    ${rankBy === "fc" ? `<p class="note">公式発表・報道に数字が出たグループだけが並びます。「推定」は報道での見立てです。</p>` : ""}</div>`;
+    ${rankBy === "fc" ? `<p class="note">公式発表・報道に数字が出たグループだけが並びます。「推定」は報道やまとめサイトに載った数字で、公式発表ではありません。</p>` : ""}</div>`;
 }
 
 function renderFanclub() {

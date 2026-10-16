@@ -128,6 +128,16 @@ class CrawlerTest(unittest.TestCase):
         self.assertEqual(crawler.remove_duplicates(self.conn), 1)
         self.assertEqual(self.conn.execute("SELECT link FROM articles").fetchall(), [("https://g/1",)])
 
+    def test_page_snippets_keep_table_rows(self):
+        html = ("<html><script>var a=1;</script><h2>会員数一覧</h2><table>"
+                "<tr><td>Snow Man</td></tr><tr><td>約300万人</td></tr>"
+                "<tr><td>プロフィール</td><td>2012年結成</td></tr></table><p>関係ない文章</p></html>")
+        text = fanclub.page_text(html)
+        self.assertNotIn("var a", text)
+        snip = fanclub.page_snippets(text, ["Snow Man"])
+        self.assertIn("Snow Man\n約300万人", snip)
+        self.assertNotIn("関係ない", snip)
+
     def test_find_image(self):
         page = '<head><meta content="/img/a.jpg?x=1&amp;y=2" property="og:image"></head>'
         self.assertEqual(thumbnails.find_image(page, "https://site.example/news/1"),

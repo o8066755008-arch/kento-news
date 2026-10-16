@@ -153,6 +153,65 @@ def wiki_snippets(wikitext: str) -> str:
     return "\n".join(hits)
 
 
+def page_text(html_text: str) -> str:
+    """HTML から本文の文字だけを取り出す。"""
+    import html as htmllib
+    t = re.sub(r"(?is)<(script|style|noscript)[^>]*>.*?</\1>", " ", html_text)
+    t = re.sub(r"(?i)<br\s*/?>|</(p|div|li|tr|h\d|td|th)>", "\n", t)
+    t = re.sub(r"<[^>]+>", " ", t)
+    return "\n".join(line.strip() for line in htmllib.unescape(t).splitlines() if line.strip())
+
+
+def page_snippets(text: str, names: list[str]) -> str:
+    """まとめページは表の1行に「グループ名：○万人」だけが書かれることが多いので、
+    人数らしい数字を含む行と、その前後の行（グループ名の見出し）を残す。"""
+    lines = text.splitlines()
+    keep = set()
+    for i, line in enumerate(lines):
+        if re.search(r"\d", line) and re.search(r"万|人|名|会員", line):
+            keep.update({i - 1, i, i + 1})
+        elif any(n in line for n in names) and re.search(r"会員|ファンクラブ|FC", line):
+            keep.add(i)
+    return "\n".join(lines[i] for i in sorted(keep) if 0 <= i < len(lines))
+
+
+PAGE_NOTE = (
+    "このテキストはファンが運営するまとめサイトの記事です。公式発表を引用している箇所でも、"
+    "まとめサイト経由の数字なので kind は「press」にしてください。"
+)
+
+
+def crawl_pages(conn, groups: list[dict], urls: list[str]) -> None:
+    """groups.json の watch_pages に書いたページを読み、会員数の記述が変わったら取り込む。"""
+    import thumbnails
+    names = [g["name"] for g in groups]
+    for url in urls:
+        if not thumbnails.allowed(url):
+            print(f"[ページ] {url} は robots.txt で禁止されているため読みません")
+            continue
+        try:
+            _, raw = thumbnails.read_head(url)
+        except Exception as e:
+            print(f"[ページ] {url} の取得に失敗しました: {e}", file=sys.stderr)
+            continue
+        snippet = page_snippets(page_text(raw), names)
+        digest = hashlib.sha256(snippet.encode()).hexdigest()
+        if not snippet:
+            print(f"[ページ] {url} に会員数の記述が見つかりません")
+            continue
+        if get_state(conn, "page:" + url) == digest:
+            print(f"[ページ] {url} は前回から変化がありません")
+            continue
+        result = translate.ask_json(EXTRACT_SYSTEM + PAGE_NOTE, snippet[:20000], extract_schema(names))
+        if result is None:
+            continue
+        for it in result["items"]:
+            it["kind"] = "press"  # まとめサイトの数字は公式扱いにしない
+        n = save_official(conn, result["items"], url, date.today().isoformat())
+        print(f"[ページ] {url} から {n} 件を記録しました")
+        set_state(conn, "page:" + url, digest)
+
+
 def crawl_wikipedia(conn, groups: list[dict]) -> None:
     names = [g["name"] for g in groups]
     changed = []
@@ -396,6 +455,7 @@ def main() -> int:
     groups = config["groups"]
     for step in (crawl_news, crawl_wikipedia, crawl_youtube, crawl_spotify):
         step(conn, groups)
+    crawl_pages(conn, groups, config.get("watch_pages", []))
     crawl_fan_reports(conn, config)
     return 0
 
