@@ -5,6 +5,11 @@ on:
   schedule:
     - cron: "0 22 * * *"   # UTC 22:00 = 日本時間 7:00
   workflow_dispatch:         # GitHub の画面から手動でも実行できる
+    inputs:
+      test_push:
+        description: "テスト通知を送る"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -40,7 +45,10 @@ jobs:
           SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
           VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
           PUSH_SUBSCRIPTIONS: ${{ secrets.PUSH_SUBSCRIPTIONS }}
-        run: ./run_daily.sh > last_run.log 2>&1 || true; cat last_run.log
+        run: |
+          ./run_daily.sh > last_run.log 2>&1 || true
+          if [ "${{ inputs.test_push }}" = "true" ]; then python3 notify.py --test >> last_run.log 2>&1 || true; fi
+          cat last_run.log
       - name: データを保存
         run: |
           git config user.name "github-actions"

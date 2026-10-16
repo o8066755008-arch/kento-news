@@ -116,6 +116,9 @@ def send(title: str, body: str) -> None:
 
 
 def main() -> int:
+    if "--test" in sys.argv:
+        send(f"{NAME} ニュース", "🔔 テスト通知です。通知の設定ができました！")
+        return 0
     config = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
     rules = config.get("notify", {})
     conn = open_db()
