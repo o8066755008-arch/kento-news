@@ -102,7 +102,7 @@ def save(conn: sqlite3.Connection, items: list[dict]) -> int:
 
 def translate_pending(conn: sqlite3.Connection) -> int:
     rows = conn.execute(
-        "SELECT link, title FROM articles WHERE title_ja IS NULL ORDER BY published DESC LIMIT 100"
+        "SELECT link, title FROM articles WHERE title_ja IS NULL ORDER BY published DESC LIMIT 300"
     ).fetchall()
     if not rows:
         return 0
