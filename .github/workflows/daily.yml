@@ -15,6 +15,9 @@ concurrency:
   group: daily
   cancel-in-progress: false
 
+env:
+  TZ: Asia/Tokyo   # 更新時刻やFCの記録日を日本時間にする
+
 jobs:
   update:
     runs-on: ubuntu-latest
