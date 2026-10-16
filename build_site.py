@@ -17,11 +17,15 @@ def build(conn, out: Path = SITE_DIR / "data.json", limit: int = 300) -> dict:
             "SELECT title, title_ja, lang, source, published, link FROM articles "
             "ORDER BY published DESC LIMIT ?", (limit,))
     ]
-    fanclub: dict[str, list] = {}
-    for day, grp, count in conn.execute(
-            "SELECT date, grp, count FROM fanclub_counts ORDER BY date"):
-        fanclub.setdefault(grp, []).append({"date": day, "count": count})
-    data = {"updated": time.strftime("%Y-%m-%d %H:%M"), "news": news, "fanclub": fanclub}
+    # {グループ: {metric: [{date, value, source}, ...]}}
+    fanclub: dict[str, dict] = {}
+    for day, grp, metric, value, source in conn.execute(
+            "SELECT date, grp, metric, value, source FROM metrics ORDER BY date"):
+        fanclub.setdefault(grp, {}).setdefault(metric, []).append(
+            {"date": day, "value": value, "source": source})
+    config = json.loads((Path(__file__).resolve().parent / "groups.json").read_text(encoding="utf-8"))
+    data = {"updated": time.strftime("%Y-%m-%d %H:%M"), "news": news, "fanclub": fanclub,
+            "fan_form_url": config.get("fan_form_url", "")}
     out.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
     return data
 

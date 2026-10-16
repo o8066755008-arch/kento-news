@@ -77,15 +77,21 @@ def open_db(path: Path = DB_PATH) -> sqlite3.Connection:
             fetched_at TEXT DEFAULT (datetime('now', 'localtime'))
         )"""
     )
+    # 会員数まわりの数値。metric は official（公式発表）/ member_no（ファン投稿の会員番号）
+    # / youtube（登録者数）/ spotify（フォロワー数）
     conn.execute(
-        """CREATE TABLE IF NOT EXISTS fanclub_counts (
+        """CREATE TABLE IF NOT EXISTS metrics (
             date TEXT NOT NULL,
             grp TEXT NOT NULL,
-            count INTEGER NOT NULL,
+            metric TEXT NOT NULL,
+            value INTEGER NOT NULL,
             source TEXT,
-            PRIMARY KEY (date, grp)
+            PRIMARY KEY (date, grp, metric)
         )"""
     )
+    # 前回の状態（Wikipedia の内容、確認済みニュース、チャンネル ID など）
+    conn.execute("CREATE TABLE IF NOT EXISTS watch_state (key TEXT PRIMARY KEY, value TEXT)")
+    conn.execute("DROP TABLE IF EXISTS fanclub_counts")
     return conn
 
 

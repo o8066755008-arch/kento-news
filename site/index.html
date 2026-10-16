@@ -29,10 +29,15 @@ main{max-width:720px;margin:0 auto;padding:12px 16px calc(24px + env(safe-area-i
 .meta{display:flex;gap:8px;align-items:center;color:var(--sub);font-size:.78rem;margin-top:8px;flex-wrap:wrap}
 .chip{background:var(--chip);color:var(--accent);border-radius:6px;padding:2px 7px;font-weight:600}
 .empty{color:var(--sub);text-align:center;padding:48px 8px;line-height:1.8}
-.fc .num{font-size:1.5rem;font-weight:700}
+.fc .metric{border-top:1px solid var(--line);margin-top:12px;padding-top:10px}
+.fc .ml{color:var(--sub);font-size:.8rem;margin-bottom:2px}
+.fc .num{font-size:1.35rem;font-weight:700}
 .fc .diff{font-size:.85rem;margin-left:6px}
+.fc .meta a{color:var(--accent)}
+.cta{border-color:var(--accent)}
+.note{color:var(--sub);font-size:.78rem;line-height:1.6}
 .up{color:#2e7d32}.down{color:#c62828}
-svg.spark{width:100%;height:70px;margin-top:8px}
+svg.spark{width:100%;height:46px;margin-top:6px}
 </style>
 </head>
 <body>
@@ -77,26 +82,47 @@ function renderNews() {
 
 function spark(points) {
   if (points.length < 2) return "";
-  const vals = points.map(p => p.count), min = Math.min(...vals), max = Math.max(...vals) || 1;
-  const xy = vals.map((v, i) => `${(i / (vals.length - 1)) * 300},${66 - ((v - min) / (max - min || 1)) * 60}`);
-  return `<svg class="spark" viewBox="0 0 300 70" preserveAspectRatio="none" role="img" aria-label="会員数の推移">
+  const vals = points.map(p => p.value), min = Math.min(...vals), max = Math.max(...vals);
+  const xy = vals.map((v, i) => `${(i / (vals.length - 1)) * 300},${44 - ((v - min) / (max - min || 1)) * 40}`);
+  return `<svg class="spark" viewBox="0 0 300 46" preserveAspectRatio="none" role="img" aria-label="推移のグラフ">
     <polyline points="${xy.join(" ")}" fill="none" stroke="var(--accent)" stroke-width="2.5" vector-effect="non-scaling-stroke"/></svg>`;
 }
 
+const METRICS = [
+  {key: "official", label: "公式発表の会員数", unit: "人", note: "ニュース・Wikipedia から"},
+  {key: "member_no", label: "最新の会員番号（推定）", unit: "番", note: "ファンの投稿から"},
+  {key: "youtube", label: "YouTube 登録者数", unit: "人", note: "毎日記録", daily: true},
+  {key: "spotify", label: "Spotify フォロワー数", unit: "人", note: "毎日記録", daily: true},
+];
+const num = v => v.toLocaleString("ja-JP");
+const isUrl = s => /^https?:\/\//.test(s || "");
+
+function metricRow(m, pts) {
+  if (!pts || !pts.length) return "";
+  const last = pts.at(-1), prev = pts.at(-2);
+  const diff = prev ? last.value - prev.value : null;
+  const diffLabel = m.daily ? "前日比" : "前回比";
+  const src = isUrl(last.source) ? `<a href="${esc(last.source)}" target="_blank" rel="noopener">出典</a>` : esc(last.source);
+  return `<div class="metric">
+    <div class="ml">${m.label}</div>
+    <div><span class="num">${num(last.value)}</span> ${m.unit}
+      ${diff !== null && diff !== 0 ? `<span class="diff ${diff > 0 ? "up" : "down"}">${diff > 0 ? "+" : ""}${num(diff)}（${diffLabel}）</span>` : ""}</div>
+    ${spark(pts)}
+    <div class="meta"><span>${esc(last.date)} 時点</span><span>${src}</span></div>
+  </div>`;
+}
+
 function renderFanclub() {
-  const groups = Object.entries(data.fanclub)
-    .sort((a, b) => b[1].at(-1).count - a[1].at(-1).count);
-  document.getElementById("fanclub").innerHTML = groups.length ? groups.map(([name, pts]) => {
-    const last = pts.at(-1), prev = pts.at(-2);
-    const diff = prev ? last.count - prev.count : null;
-    return `<div class="card fc">
-      <div class="t">${esc(name)}</div>
-      <div><span class="num">${last.count.toLocaleString("ja-JP")}</span> 人
-        ${diff !== null ? `<span class="diff ${diff >= 0 ? "up" : "down"}">${diff >= 0 ? "+" : ""}${diff.toLocaleString("ja-JP")}（前日比）</span>` : ""}</div>
-      ${spark(pts)}
-      <div class="meta"><span>${esc(last.date)} 時点 ・ ${pts.length} 日分</span></div>
-    </div>`;
-  }).join("") : `<div class="empty">ファンクラブ会員数のデータはまだありません<br>毎日の記録が始まると、ここに推移が表示されます</div>`;
+  const latest = (g, k) => (g[k] || []).at(-1)?.value ?? -1;
+  const groups = Object.entries(data.fanclub).sort((a, b) =>
+    latest(b[1], "official") - latest(a[1], "official") || latest(b[1], "youtube") - latest(a[1], "youtube"));
+  const form = data.fan_form_url ? `<a class="card cta" href="${esc(data.fan_form_url)}" target="_blank" rel="noopener">
+      <div class="t">📮 あなたの会員番号を教えてください</div>
+      <div class="o">グループと番号だけを匿名で送れます。集まった番号から最新の会員番号を推定します。</div></a>` : "";
+  const note = `<p class="note">公式発表はニュース・Wikipedia に載ったときだけ更新されます。会員番号は退会者を含む通し番号のため、今の会員数とは一致しません。</p>`;
+  document.getElementById("fanclub").innerHTML = form + (groups.length ? groups.map(([name, g]) => `
+    <div class="card fc"><div class="t">${esc(name)}</div>${METRICS.map(m => metricRow(m, g[m.key])).join("")}</div>`).join("") + note
+    : `<div class="empty">まだデータがありません<br>毎日の記録が始まると、ここに推移が表示されます</div>`);
 }
 
 document.addEventListener("click", e => {

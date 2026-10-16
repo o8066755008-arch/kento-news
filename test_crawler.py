@@ -48,15 +48,38 @@ class CrawlerTest(unittest.TestCase):
         self.assertEqual(self.conn.execute(
             "SELECT COUNT(*) FROM articles WHERE title_ja IS NULL").fetchone()[0], 1)
 
-    def test_fanclub_one_row_per_day(self):
-        self.assertEqual(fanclub.extract_count("会員数 1,234,567人", r"会員数\s*([\d,]+)"), 1234567)
-        fanclub.record(self.conn, "A", 100, "x", "2026-10-15")
-        fanclub.record(self.conn, "A", 110, "x", "2026-10-16")
-        fanclub.record(self.conn, "A", 120, "x", "2026-10-16")
+    def test_metrics_one_row_per_day(self):
+        fanclub.record(self.conn, "A", "youtube", 100, "x", "2026-10-15")
+        fanclub.record(self.conn, "A", "youtube", 110, "x", "2026-10-16")
+        fanclub.record(self.conn, "A", "youtube", 120, "x", "2026-10-16")
         out = Path(self.tmp.name) / "data.json"
-        fc = build_site.build(self.conn, out)["fanclub"]["A"]
-        self.assertEqual([p["count"] for p in fc], [100, 120])
+        yt = build_site.build(self.conn, out)["fanclub"]["A"]["youtube"]
+        self.assertEqual([p["value"] for p in yt], [100, 120])
 
+    def test_wiki_snippets_keeps_member_sentences_only(self):
+        text = "結成は2012年。ファンクラブ会員数は2024年に300万人を突破した。\nCDを100万枚売った。"
+        self.assertEqual(fanclub.wiki_snippets(text), "ファンクラブ会員数は2024年に300万人を突破した。")
+
+    def test_save_official_rejects_bad_numbers_and_dates(self):
+        items = [{"group": "A", "count": 3000000, "date": "2024-05-01", "quote": "q"},
+                 {"group": "A", "count": 999999999, "date": "", "quote": "q"},
+                 {"group": "B", "count": 500, "date": "去年", "quote": "q"}]
+        self.assertEqual(fanclub.save_official(self.conn, items, "src", "2026-10-17"), 2)
+        rows = self.conn.execute("SELECT date, grp, value FROM metrics ORDER BY grp").fetchall()
+        self.assertEqual(rows, [("2024-05-01", "A", 3000000), ("2026-10-17", "B", 500)])
+
+    def test_fan_csv_and_estimate_ignores_outliers(self):
+        csv_text = ("タイムスタンプ,グループ,会員番号\n"
+                    "2026/10/16 9:00:00,A,\"1,000\"\n"
+                    "2026/10/16 10:00:00,A,1100\n"
+                    "2026/10/16 11:00:00,A,9000\n"   # いたずら（初日の外れ値）
+                    "2026/10/17 9:00:00,A,1200\n"
+                    "2026/10/17 9:30:00,A,5000\n"        # いたずら（前日の1.3倍超）
+                    "2026/10/17 9:40:00,Z,1300\n")       # 一覧にないグループ
+        reports = fanclub.parse_fan_csv(csv_text, ["A"])
+        self.assertEqual(len(reports), 5)
+        est = fanclub.estimate_member_no(reports)["A"]
+        self.assertEqual(est, [("2026-10-16", 1100, 3), ("2026-10-17", 1200, 2)])
 
 if __name__ == "__main__":
     unittest.main()
