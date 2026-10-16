@@ -1,6 +1,9 @@
-[ja] 取得 100 件 / 新規 1 件
+[ja] 取得 100 件 / 新規 0 件
 [ko] 取得 60 件 / 新規 0 件
 [en] 取得 100 件 / 新規 0 件
-翻訳 160 件
-fanclub_sources.json に取得元 URL が設定されていません
-ニュース 261 件 / ファンクラブ 0 グループ → site/data.json
+翻訳 0 件
+[公式] timelesz 1,000,000 人（2026-10-08）: timeleszが会員数100万人突破の歴史的快挙！
+[YouTube] YOUTUBE_API_KEY が未設定です
+[Spotify] SPOTIFY_CLIENT_ID / SPOTIFY_CLIENT_SECRET が未設定です
+[会員番号] フォームの CSV URL が未設定です
+ニュース 261 件 / ファンクラブ 1 グループ → site/data.json
