@@ -24,7 +24,9 @@ def build(conn, out: Path = SITE_DIR / "data.json", limit: int = 300) -> dict:
         fanclub.setdefault(grp, {}).setdefault(metric, []).append(
             {"date": day, "value": value, "source": source})
     config = json.loads((Path(__file__).resolve().parent / "groups.json").read_text(encoding="utf-8"))
-    data = {"updated": time.strftime("%Y-%m-%d %H:%M"), "news": news, "fanclub": fanclub,
+    row = conn.execute("SELECT value FROM watch_state WHERE key = 'digest'").fetchone()
+    digest = json.loads(row[0]) if row else None
+    data = {"updated": time.strftime("%Y-%m-%d %H:%M"), "news": news, "digest": digest, "fanclub": fanclub,
             "fan_form_url": config.get("fan_form_url", "")}
     out.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
     return data

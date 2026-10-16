@@ -6,6 +6,7 @@ from unittest import mock
 
 import build_site
 import crawler
+import digest
 import fanclub
 
 SAMPLE = """<?xml version="1.0"?><rss><channel>
@@ -74,6 +75,20 @@ class CrawlerTest(unittest.TestCase):
         self.assertEqual(fanclub.parse_masked_number("1234567"), 1234000)
         self.assertIsNone(fanclub.parse_masked_number("abc"))
         self.assertIsNone(fanclub.parse_masked_number("12"))
+
+    def test_digest_keeps_only_recent_and_valid_ids(self):
+        from datetime import datetime, timezone
+        crawler.save(self.conn, crawler.parse_rss(SAMPLE, "ko"))  # 2026-10-15 の記事
+        now = datetime(2026, 10, 17, tzinfo=timezone.utc)
+        articles = digest.recent_articles(self.conn, now)
+        self.assertEqual(len(articles), 1)
+        self.assertEqual(digest.recent_articles(self.conn, datetime(2026, 10, 30, tzinfo=timezone.utc)), [])
+        fake = {"topics": [{"region": "海外", "title": "T", "summary": "S", "article_ids": [0, 5]},
+                           {"region": "国内", "title": "空", "summary": "S", "article_ids": [9]}]}
+        with mock.patch("translate.ask_json", return_value=fake):
+            d = digest.build_digest(articles)
+        self.assertEqual(len(d["topics"]), 1)
+        self.assertEqual(d["topics"][0]["articles"][0]["link"], "https://example.com/a")
 
     def test_is_group_channel(self):
         self.assertTrue(fanclub.is_group_channel("timelesz", "timelesz [タイムレス]"))
