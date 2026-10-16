@@ -33,12 +33,12 @@ jobs:
       - name: 取得・翻訳・記録
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-        run: ./run_daily.sh || true
+        run: ./run_daily.sh > last_run.log 2>&1 || true; cat last_run.log
       - name: データを保存
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@users.noreply.github.com"
-          git add data.db site/data.json
+          git add data.db site/data.json last_run.log
           git commit -m "データ更新 $(date +%F)" || echo "変更なし"
           git push
       - uses: actions/configure-pages@v5
