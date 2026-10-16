@@ -19,6 +19,14 @@
     {
       "url": "https://twipla.jp/search?keyword=%E4%B8%AD%E5%B3%B6%E5%81%A5%E4%BA%BA",
       "note": "ツイプラ（ファンのオフ会・イベント告知）"
+    },
+    {
+      "url": "https://starto.jp/s/p/artist/156",
+      "note": "STARTO 公式のアーティストページ（お知らせ・出演情報）"
+    },
+    {
+      "url": "https://www.tvkingdom.jp/schedulesBySearch.action?stationPlatformId=0&condition.keyword=%E4%B8%AD%E5%B3%B6%E5%81%A5%E4%BA%BA",
+      "note": "テレビ王国（テレビ出演の番組表）"
     }
   ],
   "watch_pages": [

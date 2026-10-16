@@ -202,6 +202,19 @@ class CrawlerTest(unittest.TestCase):
         self.assertTrue(events.EVENT_WORDS.search("나카지마 켄토 팬미팅"))
         self.assertFalse(events.EVENT_WORDS.search("中島健人のインタビュー"))
 
+    def test_event_before_article_date_is_dropped(self):
+        events.open_events(self.conn)
+        from datetime import date, timedelta
+        pub = date.today().isoformat()
+        before = (date.today() - timedelta(days=20)).isoformat()
+        after = (date.today() + timedelta(days=20)).isoformat()
+        evs = [{"title": "もう始まった番組", "kind": "出演", "date": before, "date_text": "", "place": "",
+                "region": "国内", "source_id": 0},
+               {"title": "これからのライブ", "kind": "ライブ", "date": after, "date_text": "", "place": "",
+                "region": "国内", "source_id": 0}]
+        n = events.save_events(self.conn, evs, [{"url": "u", "source": "s", "published": pub + "T00:00:00"}])
+        self.assertEqual(n, 1)
+
     def test_notify_new_event(self):
         prev = {"topics": [], "events": ["a|11/3 ライブ"], "youtube": None, "fc": None, "member_no": None,
                 "fc_rank": None, "yt_rank": None}

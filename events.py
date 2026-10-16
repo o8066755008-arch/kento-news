@@ -16,17 +16,30 @@ from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 import translate
-from crawler import open_db
+from crawler import fetch, feed_url, open_db, parse_rss
 
 CONFIG_PATH = Path(__file__).resolve().parent / "groups.json"
 
 # イベントらしい見出しを選ぶための言葉（日本語・英語・韓国語・中国語・タイ語）
 EVENT_WORDS = re.compile(
     r"ライブ|ツアー|公演|コンサート|イベント|ファンミ|オフ会|握手|舞台挨拶|出演|開催|上映|来日|来台|来韓|"
-    r"フェス|展示|ポップアップ|発売記念|サイン会|チケット|"
+    r"フェス|展示|ポップアップ|発売記念|サイン会|チケット|放送|配信|番組|ドラマ|映画|公開|舞台|登場|ゲスト|MC|"
     r"tour|concert|live|fan ?meeting|festival|event|premiere|"
     r"콘서트|투어|팬미팅|공연|내한|演唱會|巡演|見面會|粉絲見面|簽名會|คอนเสิร์ต|แฟนมีต",
     re.IGNORECASE)
+
+VERSION = 2  # 読み取り方を変えたら上げる（それまでのイベントを消して読み直す）
+
+# イベントを探すためのニュース検索（Google ニュース）: (検索語, hl, gl, ceid)
+EVENT_QUERIES = [
+    ("中島健人 (ライブ OR ツアー OR 公演 OR コンサート)", "ja", "JP", "JP:ja"),
+    ("中島健人 (イベント OR ファンミーティング OR 舞台挨拶 OR サイン会 OR 握手会)", "ja", "JP", "JP:ja"),
+    ("中島健人 (出演 OR 放送 OR 配信 OR 番組 OR ゲスト)", "ja", "JP", "JP:ja"),
+    ("中島健人 (映画 OR ドラマ OR 舞台) (公開 OR 放送 OR 上演)", "ja", "JP", "JP:ja"),
+    ("나카지마 켄토 (팬미팅 OR 콘서트 OR 내한 OR 공연)", "ko", "KR", "KR:ko"),
+    ("中島健人 (演唱會 OR 見面會 OR 來台 OR 簽名會)", "zh-TW", "TW", "TW:zh-Hant"),
+    ('"Kento Nakajima" (concert OR tour OR "fan meeting" OR festival OR event)', "en-US", "US", "US:en"),
+]
 
 SYSTEM = (
     "あなたは中島健人さんのファン向けのイベント情報担当です。渡されたテキストから、"
@@ -35,8 +48,12 @@ SYSTEM = (
     "ライブ・コンサート・ツアーは「ライブ」、ファンミーティング・舞台挨拶・サイン会・展示などは「イベント」、"
     "テレビ・映画祭・番組などへの出演は「出演」、ファンが主催する集まりは「オフ会」です。\n"
     "- title は日本語で30字以内。place は会場や都市（日本語、わからなければ空文字）。\n"
-    "- date は開催日（期間なら初日）を YYYY-MM-DD、年が書かれていなければ今年として補い、"
-    "日付がわからなければ空文字。date_text は「11月3日〜5日」のような元の書き方を日本語で。\n"
+    "- 各項目には記事の日付（published）が付いています。予定の年が書かれていないときは、"
+    "その記事の日付から見て次に来る日付として年を補ってください（記事が10月で「4月6日」とあれば、"
+    "それが既に終わった話なのか翌年の予定なのかを文脈で判断し、終わった話なら入れない）。\n"
+    "- 記事の日付の時点ですでに終わっていた予定・始まっていた番組は入れないでください。\n"
+    "- date は開催日（期間なら初日）を YYYY-MM-DD、日付がわからなければ空文字。"
+    "date_text は「2026年11月3日〜5日」のように年も付けた日本語で書きます。\n"
     "- region は日本国内なら「国内」、海外なら「海外」。\n"
     "- source_id には根拠になった項目の番号を入れます。\n"
     "- 予定ではない話題（過去の感想、インタビュー、ランキングなど）や、中島健人さんと関係ない予定は入れないでください。"
@@ -103,6 +120,11 @@ def save_events(conn, events: list[dict], sources: list[dict]) -> int:
         if day and date.fromisoformat(day) < today - timedelta(days=180):
             continue
         src = sources[e["source_id"]]
+        # 記事の時点で終わっていた予定（読み違いを含む）は入れない
+        pub = (src.get("published") or "")[:10]
+        if day and pub and day < pub:
+            print(f"[イベント] 記事（{pub}）より前の予定のため除外: {e['date_text']} {e['title']}")
+            continue
         eid = event_id(e["title"], day)
         if conn.execute("SELECT 1 FROM events WHERE id = ?", (eid,)).fetchone():
             continue
@@ -129,28 +151,47 @@ def set_state(conn, key, value):
     conn.commit()
 
 
-def from_news(conn) -> None:
-    """まだ確認していない、イベントらしい見出しの記事から予定を読み取る。"""
+def event_candidates(conn) -> list[tuple[str, str, str, str]]:
+    """(リンク, 見出し（日本語があれば日本語）, 配信元, 日付) のうち、まだ確認していないもの。"""
     since = (datetime.now(timezone.utc) - timedelta(days=60)).isoformat()
-    rows = conn.execute(
-        "SELECT link, title, COALESCE(title_ja, title), source, published FROM articles "
-        "WHERE published >= ? ORDER BY published DESC", (since,)).fetchall()
-    todo = [r for r in rows
-            if (EVENT_WORDS.search(r[1]) or EVENT_WORDS.search(r[2])) and get_state(conn, "ev:" + r[0]) is None]
+    found: dict[str, tuple] = {}
+    for link, title, ja, src, pub in conn.execute(
+            "SELECT link, title, COALESCE(title_ja, title), source, published FROM articles "
+            "WHERE published >= ?", (since,)):
+        if EVENT_WORDS.search(title) or EVENT_WORDS.search(ja):
+            found[link] = (link, ja, src, pub)
+    for q, hl, gl, ceid in EVENT_QUERIES:
+        try:
+            items = parse_rss(fetch(feed_url(q, hl, gl, ceid)), "ja")
+        except Exception as e:
+            print(f"[イベント] 検索「{q}」の取得に失敗しました: {e}", file=sys.stderr)
+            continue
+        for it in items:
+            if it["published"] >= since:
+                found.setdefault(it["link"], (it["link"], it["title"], it["source"], it["published"]))
+    return sorted((v for k, v in found.items() if get_state(conn, f"ev{VERSION}:" + k) is None),
+                  key=lambda v: v[3], reverse=True)
+
+
+def from_news(conn, batch: int = 60, limit: int = 300) -> None:
+    """イベントらしい記事（集めたニュース＋イベント用の検索）から予定を読み取る。"""
+    todo = event_candidates(conn)[:limit]
     if not todo:
         print("[イベント] 新しく確認する記事はありません")
         return
-    todo = todo[:80]
-    text = f"今日は {date.today().isoformat()} です。\n" + "\n".join(
-        f"{i}. {ja}（{src}・{pub[:10]}）" for i, (_, _, ja, src, pub) in enumerate(todo))
-    result = translate.ask_json(SYSTEM, text, SCHEMA)
-    if result is None:
-        return  # 次回もう一度読む
-    sources = [{"url": link, "source": src} for link, _, _, src, _ in todo]
-    n = save_events(conn, result["events"], sources)
-    for link, *_ in todo:
-        set_state(conn, "ev:" + link, "1")
-    print(f"[イベント] ニュース {len(todo)} 件を確認 / 新しい予定 {n} 件")
+    total = 0
+    for i in range(0, len(todo), batch):
+        chunk = todo[i:i + batch]
+        text = f"今日は {date.today().isoformat()} です。\n" + "\n".join(
+            f"{j}. {title}（{src}・published {pub[:10]}）" for j, (_, title, src, pub) in enumerate(chunk))
+        result = translate.ask_json(SYSTEM, text, SCHEMA)
+        if result is None:
+            break  # 次回もう一度読む
+        sources = [{"url": link, "source": src, "published": pub} for link, _, src, pub in chunk]
+        total += save_events(conn, result["events"], sources)
+        for link, *_ in chunk:
+            set_state(conn, f"ev{VERSION}:" + link, "1")
+    print(f"[イベント] 記事 {len(todo)} 件を確認 / 新しい予定 {total} 件")
 
 
 def from_pages(conn, pages: list[dict]) -> None:
@@ -158,7 +199,7 @@ def from_pages(conn, pages: list[dict]) -> None:
     import fanclub
     import thumbnails
     today = date.today().isoformat()
-    if get_state(conn, "events_daily") == today:
+    if get_state(conn, f"events_daily{VERSION}") == today:
         print("[イベント] 告知ページは今日すでに確認済みです")
         return
     for page in pages:
@@ -180,22 +221,28 @@ def from_pages(conn, pages: list[dict]) -> None:
         snippet = "\n".join(lines[j] for j in keep)[:15000]
         digest = hashlib.sha256(snippet.encode()).hexdigest()
         print(f"[イベント] {url}: 本文 {len(text)} 文字 / 日付のある部分 {len(snippet)} 文字")
-        if not snippet or get_state(conn, "evpage:" + url) == digest:
+        if not snippet or get_state(conn, f"evpage{VERSION}:" + url) == digest:
             continue
         result = translate.ask_json(SYSTEM, f"今日は {today} です。\n0. {snippet}", SCHEMA)
         if result is None:
             continue
         for e in result["events"]:
             e["source_id"] = 0
-        n = save_events(conn, result["events"], [{"url": url, "source": page.get("note", url)}])
+        n = save_events(conn, result["events"],
+                        [{"url": url, "source": page.get("note", url), "published": fanclub.page_date(raw) or ""}])
         print(f"[イベント] {url} から新しい予定 {n} 件")
-        set_state(conn, "evpage:" + url, digest)
-    set_state(conn, "events_daily", today)
+        set_state(conn, f"evpage{VERSION}:" + url, digest)
+    set_state(conn, f"events_daily{VERSION}", today)
 
 
 def main() -> int:
     config = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
     conn = open_events(open_db())
+    if get_state(conn, "events_version") != str(VERSION):
+        # 読み取り方を直したので、これまでのイベントを消して読み直す
+        conn.execute("DELETE FROM events")
+        set_state(conn, "events_version", str(VERSION))
+        print("[イベント] 読み取り方を更新したため、イベントを読み直します")
     from_news(conn)
     from_pages(conn, config.get("event_pages", []))
     return 0
