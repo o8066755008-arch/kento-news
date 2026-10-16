@@ -8,6 +8,20 @@ import os
 import sys
 
 MODEL = "claude-opus-5-5"
+# 料金（1M トークンあたりのドル）と円換算。実行ごとの使用量と費用の目安を記録に出す
+PRICE_IN, PRICE_OUT, YEN = 4.00, 20.00, 150
+_usage = {"in": 0, "out": 0, "calls": 0}
+
+
+def _report_usage() -> None:
+    if _usage["calls"]:
+        usd = _usage["in"] / 1e6 * PRICE_IN + _usage["out"] / 1e6 * PRICE_OUT
+        print(f"[AI 使用量] {_usage['calls']} 回 / 入力 {_usage['in']:,} / 出力 {_usage['out']:,} トークン"
+              f"（約 {usd * YEN:.1f} 円）", flush=True)
+
+
+import atexit  # noqa: E402
+atexit.register(_report_usage)
 
 TRANSLATE_SYSTEM = (
     "あなたは芸能ニュースの翻訳者です。渡された見出しを自然な日本語に翻訳してください。"
@@ -47,6 +61,9 @@ def ask_json(system: str, content: str, schema: dict) -> dict | None:
     except anthropic.APIError as e:
         print(f"AI 処理に失敗しました: {e}", file=sys.stderr)
         return None
+    _usage["calls"] += 1
+    _usage["in"] += response.usage.input_tokens
+    _usage["out"] += response.usage.output_tokens
     if response.stop_reason != "end_turn":
         print(f"AI 処理が完了しませんでした: {response.stop_reason}", file=sys.stderr)
         return None
