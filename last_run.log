@@ -1,46 +1,48 @@
 [Bing en-US] 取得に失敗しました: not well-formed (invalid token): line 1, column 41 / 先頭: b'<!DOCTYPE html><html xml:lang="en" xmlns=http://www.w3.org/1999/xhtml xmlns:Web=http://schemas.live.com/Web><head><meta '
-[Bing zh-TW] 取得に失敗しました: not well-formed (invalid token): line 1, column 41 / 先頭: b'<!DOCTYPE html><html xml:lang="en" xmlns=http://www.w3.org/1999/xhtml xmlns:Web=http://schemas.live.com/Web><head><meta '
 重複の整理 0 件
-[Google JP] 取得 100 件 / 新規 0 件
-[Google JP] 取得 100 件 / 新規 0 件
-[Google KR] 取得 60 件 / 新規 1 件
+[Google JP] 取得 100 件 / 新規 1 件
+[Google JP] 取得 100 件 / 新規 1 件
+[Google KR] 取得 58 件 / 新規 0 件
 [Google US] 取得 100 件 / 新規 0 件
-[Google SG] 取得 100 件 / 新規 0 件
+[Google SG] 取得 100 件 / 新規 1 件
 [Google PH] 取得 100 件 / 新規 0 件
 [Google TW] 取得 100 件 / 新規 0 件
 [Google HK] 取得 100 件 / 新規 0 件
 [Google TH] 取得 34 件 / 新規 0 件
 [Google VN] 取得 9 件 / 新規 0 件
-[Google ID] 取得 52 件 / 新規 1 件
-[Google MX] 取得 29 件 / 新規 0 件
+[Google ID] 取得 52 件 / 新規 0 件
+[Google MX] 取得 30 件 / 新規 1 件
 [Google BR] 取得 23 件 / 新規 0 件
 [Google FR] 取得 15 件 / 新規 0 件
-[Bing ja-JP] 取得 12 件 / 新規 0 件
+[Bing ja-JP] 取得 12 件 / 新規 1 件
 [Bing ko-KR] 取得 11 件 / 新規 0 件
+[Bing zh-TW] 取得 12 件 / 新規 0 件
 [Bing th-TH] 取得 12 件 / 新規 0 件
 翻訳 2 件
-[AI 使用量] 1 回 / 入力 427 / 出力 100 トークン（約 0.6 円）
-[サムネイル] 2 件を確認 / 画像あり 0 件
-[トピックス] 記事 8 件 → 国内 5 件 / 海外 3 件
-[AI 使用量] 1 回 / 入力 1,292 / 出力 1,174 トークン（約 4.3 円）
-[イベント] 新しく確認する記事はありません
+[AI 使用量] 1 回 / 入力 391 / 出力 70 トークン（約 0.4 円）
+[サムネイル] 3 件を確認 / 画像あり 0 件
+[トピックス] 記事 10 件 → 国内 5 件 / 海外 4 件
+[AI 使用量] 1 回 / 入力 1,410 / 出力 1,220 トークン（約 4.5 円）
+[イベント] [ニュース] 出演 日付未定 音楽番組「STAR」出演
+[イベント] 記事 4 件を確認 / 新しい予定 1 件
 [イベント] 告知ページは今日すでに確認済みです
+[AI 使用量] 1 回 / 入力 1,740 / 出力 339 トークン（約 2.1 円）
 [YouTube] A.B.C-Z の公式チャンネルが見つかりません。groups.json に ID を書いてください
 [YouTube] 20th Century の公式チャンネルが見つかりません。groups.json に ID を書いてください
-[YouTube] SixTONES 2,740,000 人（SixTONES）
-[YouTube] Hey! Say! JUMP 896,000 人（Hey! Say! JUMP）
-[YouTube] Travis Japan 677,000 人（Travis Japan）
-[YouTube] Kis-My-Ft2 863,000 人（Kis-My-Ft2）
-[YouTube] timelesz 1,230,000 人（timelesz [タイムレス]）
-[YouTube] 木村拓哉 2,420,000 人（木村拓哉）
-[YouTube] Snow Man 4,440,000 人（Snow Man）
-[YouTube] King & Prince 1,880,000 人（King & Prince）
-[YouTube] 中島健人 258,000 人（中島健人 Official YouTube Channel）
 [YouTube] NEWS 293,000 人（にゅうちゅうぶ | NEWS official）
-[YouTube] Aぇ! group 654,000 人（Aぇ! group）
 [YouTube] なにわ男子 1,900,000 人（なにわ男子）
+[YouTube] SixTONES 2,740,000 人（SixTONES）
+[YouTube] timelesz 1,230,000 人（timelesz [タイムレス]）
+[YouTube] Hey! Say! JUMP 896,000 人（Hey! Say! JUMP）
 [YouTube] WEST. 915,000 人（WEST.）
 [YouTube] 嵐 3,880,000 人（ARASHI）
+[YouTube] King & Prince 1,880,000 人（King & Prince）
+[YouTube] Aぇ! group 654,000 人（Aぇ! group）
+[YouTube] Snow Man 4,440,000 人（Snow Man）
+[YouTube] 中島健人 258,000 人（中島健人 Official YouTube Channel）
+[YouTube] Kis-My-Ft2 863,000 人（Kis-My-Ft2）
+[YouTube] 木村拓哉 2,420,000 人（木村拓哉）
+[YouTube] Travis Japan 677,000 人（Travis Japan）
 [Spotify] SPOTIFY_CLIENT_ID / SPOTIFY_CLIENT_SECRET が未設定です
 [会員数] Wikipedia・まとめページは今日すでに確認済みです
 [手動] 中島健人 member_no 100,000（2026-09-30）
@@ -66,12 +68,12 @@
 [手動] 河合郁人 estimate 6,000（2026-10-10）
 [手動] timelesz の official を削除（公式発表の出典を確認できないため。報道・推計として扱う）
 [会員番号] フォームの回答を読み込みました（有効な回答 0 件）
-[AI 使用量] 1 回 / 入力 1,557 / 出力 9 トークン（約 1.0 円）
-ニュース 752 件 / ファンクラブ 22 グループ → site/data.json
-[通知] 5 件の変化:
-🇯🇵 「男性アイドル部門」受賞と推し活論
-🇯🇵 山田涼介と同い年で驚くランキング2位
-🌏 韓国Global Q'sに中島健人が登場
-🌏 フジテレビSTARでのライブを海外紹介
-ほか 1 件
+[AI 使用量] 1 回 / 入力 1,248 / 出力 9 トークン（約 0.8 円）
+ニュース 757 件 / ファンクラブ 22 グループ → site/data.json
+[通知] 6 件の変化:
+🇯🇵 中島健人似のメガネ屋店員が話題
+🇯🇵 「推し活民」と男性アイドル部門受賞
+🌏 韓国「Global Q's」で中島健人特集
+🌏 「桜の花のように儚く」海外で評価
+ほか 2 件
 [通知] 2 / 2 台に送りました
