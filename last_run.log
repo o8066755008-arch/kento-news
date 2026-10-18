@@ -1,46 +1,46 @@
-[Bing zh-TW] 取得に失敗しました: <urlopen error _ssl.c:1015: The handshake operation timed out> / 先頭: b''
 重複の整理 0 件
-[Google JP] 取得 102 件 / 新規 0 件
-[Google JP] 取得 100 件 / 新規 0 件
-[Google KR] 取得 58 件 / 新規 0 件
+[Google JP] 取得 100 件 / 新規 1 件
+[Google JP] 取得 100 件 / 新規 1 件
+[Google KR] 取得 59 件 / 新規 2 件
 [Google US] 取得 100 件 / 新規 0 件
-[Google SG] 取得 100 件 / 新規 1 件
-[Google PH] 取得 100 件 / 新規 0 件
+[Google SG] 取得 100 件 / 新規 0 件
+[Google PH] 取得 100 件 / 新規 1 件
 [Google TW] 取得 100 件 / 新規 0 件
 [Google HK] 取得 100 件 / 新規 1 件
-[Google TH] 取得 34 件 / 新規 0 件
+[Google TH] 取得 35 件 / 新規 0 件
 [Google VN] 取得 9 件 / 新規 0 件
-[Google ID] 取得 50 件 / 新規 0 件
+[Google ID] 取得 51 件 / 新規 1 件
 [Google MX] 取得 29 件 / 新規 0 件
-[Google BR] 取得 22 件 / 新規 0 件
-[Google FR] 取得 16 件 / 新規 0 件
+[Google BR] 取得 23 件 / 新規 0 件
+[Google FR] 取得 15 件 / 新規 0 件
 [Bing ja-JP] 取得 12 件 / 新規 0 件
 [Bing ko-KR] 取得 11 件 / 新規 0 件
 [Bing en-US] 取得 9 件 / 新規 0 件
+[Bing zh-TW] 取得 12 件 / 新規 0 件
 [Bing th-TH] 取得 12 件 / 新規 0 件
-翻訳 2 件
-[AI 使用量] 1 回 / 入力 381 / 出力 70 トークン（約 0.4 円）
-[サムネイル] 2 件を確認 / 画像あり 0 件
-[トピックス] 記事 6 件 → 国内 4 件 / 海外 2 件
-[AI 使用量] 1 回 / 入力 1,150 / 出力 882 トークン（約 3.3 円）
-[イベント] 記事 2 件を確認 / 新しい予定 0 件
+翻訳 5 件
+[AI 使用量] 1 回 / 入力 563 / 出力 223 トークン（約 1.0 円）
+[サムネイル] 7 件を確認 / 画像あり 0 件
+[トピックス] 記事に変化がないため前回のまとめを使います
+[イベント] 記事 3 件を確認 / 新しい予定 0 件
 [イベント] 告知ページは今日すでに確認済みです
-[AI 使用量] 1 回 / 入力 1,579 / 出力 9 トークン（約 1.0 円）
+[AI 使用量] 1 回 / 入力 1,718 / 出力 9 トークン（約 1.1 円）
+[報道] timelesz 810,000 人（2026-10-18）: 【新生timelesz】FC会員数81万人を突破！
 [YouTube] A.B.C-Z の公式チャンネルが見つかりません。groups.json に ID を書いてください
 [YouTube] 20th Century の公式チャンネルが見つかりません。groups.json に ID を書いてください
-[YouTube] Snow Man 4,440,000 人（Snow Man）
-[YouTube] timelesz 1,230,000 人（timelesz [タイムレス]）
+[YouTube] Aぇ! group 654,000 人（Aぇ! group）
+[YouTube] Hey! Say! JUMP 896,000 人（Hey! Say! JUMP）
+[YouTube] SixTONES 2,740,000 人（SixTONES）
 [YouTube] WEST. 915,000 人（WEST.）
-[YouTube] Travis Japan 677,000 人（Travis Japan）
+[YouTube] 嵐 3,880,000 人（ARASHI）
 [YouTube] 中島健人 258,000 人（中島健人 Official YouTube Channel）
 [YouTube] 木村拓哉 2,420,000 人（木村拓哉）
-[YouTube] Aぇ! group 654,000 人（Aぇ! group）
-[YouTube] SixTONES 2,740,000 人（SixTONES）
-[YouTube] Hey! Say! JUMP 896,000 人（Hey! Say! JUMP）
-[YouTube] NEWS 293,000 人（にゅうちゅうぶ | NEWS official）
-[YouTube] 嵐 3,880,000 人（ARASHI）
 [YouTube] Kis-My-Ft2 863,000 人（Kis-My-Ft2）
+[YouTube] Snow Man 4,440,000 人（Snow Man）
+[YouTube] NEWS 293,000 人（にゅうちゅうぶ | NEWS official）
 [YouTube] なにわ男子 1,900,000 人（なにわ男子）
+[YouTube] Travis Japan 677,000 人（Travis Japan）
+[YouTube] timelesz 1,230,000 人（timelesz [タイムレス]）
 [YouTube] King & Prince 1,880,000 人（King & Prince）
 [Spotify] SPOTIFY_CLIENT_ID / SPOTIFY_CLIENT_SECRET が未設定です
 [会員数] Wikipedia・まとめページは今日すでに確認済みです
@@ -67,12 +67,6 @@
 [手動] 河合郁人 estimate 6,000（2026-10-10）
 [手動] timelesz の official を削除（公式発表の出典を確認できないため。報道・推計として扱う）
 [会員番号] フォームの回答を読み込みました（有効な回答 0 件）
-[AI 使用量] 1 回 / 入力 1,228 / 出力 9 トークン（約 0.8 円）
-ニュース 735 件 / ファンクラブ 22 グループ → site/data.json
-[通知] 5 件の変化:
-🇯🇵 中島健人「男性アイドル部門」受賞と推し活論
-🇯🇵 重岡大毅が語る中島健人との“殿堂入り”関係
-🇯🇵 東京国際映画祭ナビゲーターとして直撃取材
-🇯🇵 「山田涼介と同い年」で驚いたランキング2位
-ほか 1 件
-[通知] 2 / 2 台に送りました
+[AI 使用量] 1 回 / 入力 1,122 / 出力 61 トークン（約 0.9 円）
+ニュース 742 件 / ファンクラブ 22 グループ → site/data.json
+[通知] 知らせる変化はありません
