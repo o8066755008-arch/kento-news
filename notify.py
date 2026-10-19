@@ -192,7 +192,7 @@ def send(conn, config: dict, title: str, body: str) -> None:
 def reminders(conn, now, rules: dict) -> list[str]:
     """放送前・締切前のリマインド。同じ予定・同じ段階では1回だけ知らせる。
 
-    - 出演: 開始時刻があれば、開始までが「次の更新まで（3時間）」以内になった回で。なければ当日の朝
+    - 出演: 開始時刻があれば、開始までが「次の更新まで（1時間）」以内になった回で。なければ当日の朝
     - チケット: 前日（9時以降）と当日の朝
     - 発売日・コンサート・イベント: 前日（9時以降）
     """
@@ -216,7 +216,7 @@ def reminders(conn, now, rules: dict) -> list[str]:
         if kind == "出演":
             if hhmm:
                 start = datetime.fromisoformat(f"{day}T{hhmm}")
-                if timedelta(0) < start - now <= timedelta(hours=rules.get("remind_hours", 3)):
+                if timedelta(0) < start - now <= timedelta(hours=rules.get("remind_hours", 1)):
                     once(f"{eid}:soon", f"📺 まもなく {hhmm}〜 {title}")
             elif day == today and now.hour >= 6:
                 once(f"{eid}:today", f"📺 今日 {title}")

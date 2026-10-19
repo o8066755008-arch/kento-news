@@ -16,7 +16,8 @@
 body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Hiragino Sans",sans-serif;-webkit-text-size-adjust:100%}
 header{position:sticky;top:0;z-index:2;background:var(--bg);padding:calc(12px + env(safe-area-inset-top)) 16px 0;border-bottom:1px solid var(--line)}
 h1{font-size:1.15rem;margin:0 0 2px}
-.updated{color:var(--sub);font-size:.75rem}
+.updated{color:var(--sub);font-size:.75rem;display:flex;align-items:center;gap:6px}
+.reload{border:1px solid var(--line);background:var(--card);color:var(--accent);border-radius:999px;font:inherit;font-weight:700;padding:1px 9px;font-size:.85rem}
 .tabs{display:flex;gap:4px;margin-top:10px}
 .tabs{overflow-x:auto;scrollbar-width:none}
 .tabs::-webkit-scrollbar{display:none}
@@ -592,6 +593,7 @@ document.addEventListener("click", e => {
   }
   const ot = e.target.closest("[data-open-topic]");
   if (ot) showTopic(Number(ot.dataset.openTopic));
+  if (e.target.closest("[data-reload]")) loadData(true);
   const nm = e.target.closest("[data-news]");
   if (nm) { newsMode = nm.dataset.news; renderNews(); }
   const rk = e.target.closest("[data-rank]");
@@ -606,13 +608,32 @@ document.addEventListener("click", e => {
 
 function renderAll() { renderHome(); renderNews(); renderEvents(); renderFanclub(); renderSettings(); }
 
-fetch("data.json", {cache: "no-store"}).then(r => r.json()).then(d => {
-  data = d;
-  document.getElementById("updated").textContent = `最終更新: ${d.updated}`;
-  renderAll();
-}).catch(() => {
-  document.getElementById("updated").textContent = "データを読み込めませんでした";
-  renderAll();
+// 最新のデータを読む。データは1時間おきに自動で集めていて、ここでは集めたファイルを読むだけ（API の費用はかからない）
+let loadedAt = 0;
+function agoText(updated) {
+  const t = new Date(updated.replace(" ", "T") + ":00+09:00");
+  const min = Math.round((Date.now() - t) / 60000);
+  return isNaN(min) ? updated : min < 60 ? `${Math.max(min, 0)}分前` : min < 1440 ? `${Math.floor(min / 60)}時間前` : updated;
+}
+function loadData(manual) {
+  const el = document.getElementById("updated");
+  if (manual) el.textContent = "最新の情報を読み込み中…";
+  // 途中のキャッシュを通さないよう、毎回ちがう URL で読む
+  return fetch(`data.json?t=${Date.now()}`, {cache: "no-store"}).then(r => r.json()).then(d => {
+    const changed = !data.updated || d.updated !== data.updated;
+    data = d;
+    loadedAt = Date.now();
+    el.innerHTML = `最終更新: ${esc(agoText(d.updated))}（${esc(d.updated)}）<button class="reload" data-reload aria-label="最新の情報を読み込む">↻</button>`;
+    if (changed || manual) renderAll();
+  }).catch(() => {
+    el.innerHTML = `データを読み込めませんでした <button class="reload" data-reload>↻ もう一度</button>`;
+    if (!loadedAt) renderAll();
+  });
+}
+loadData();
+// アプリに戻ってきたとき（5分以上たっていれば）自動で最新にする
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible" && Date.now() - loadedAt > 5 * 60000) loadData();
 });
 
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js");

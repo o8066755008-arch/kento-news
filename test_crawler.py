@@ -270,7 +270,7 @@ class CrawlerTest(unittest.TestCase):
         for eid, kind, day, hhmm, title in rows:
             self.conn.execute("INSERT INTO events (id, kind, date, time, title, date_text) VALUES (?, ?, ?, ?, ?, '')",
                               (eid, kind, day, hhmm, title))
-        now = datetime(2026, 10, 25, 20, 0)
+        now = datetime(2026, 10, 25, 21, 10)
         lines = notify.reminders(self.conn, now, {})
         self.assertEqual(sorted(lines), sorted(["📺 まもなく 22:00〜 日曜日の初耳学", "🎫 明日 23:59 東京公演 FC先行 申込締切",
                                                 "💿 明日 新曲発売", "📺 今日 時刻なしの出演"]))

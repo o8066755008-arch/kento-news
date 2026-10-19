@@ -1,9 +1,9 @@
-# 3時間おきにニュース・イベント・FC会員数を取得して GitHub Pages に公開する
+# 1時間おきにニュースを、3時間おきにイベント・FC会員数なども取得して GitHub Pages に公開する
 name: daily
 
 on:
   schedule:
-    - cron: "0 */3 * * *"   # 3時間おき（日本時間 0, 3, 6, 9, 12, 15, 18, 21 時）
+    - cron: "7 * * * *"   # 1時間おき（毎時7分。重い処理は run_daily.sh の中で3時間おきに絞る）
   workflow_dispatch:         # GitHub の画面から手動でも実行できる
     inputs:
       test_push:
@@ -46,7 +46,7 @@ jobs:
           VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
           PUSH_SUBSCRIPTIONS: ${{ secrets.PUSH_SUBSCRIPTIONS }}
         run: |
-          ./run_daily.sh > last_run.log 2>&1 || true
+          FULL=$([ "${{ github.event_name }}" = "workflow_dispatch" ] && echo 1 || echo 0) ./run_daily.sh > last_run.log 2>&1 || true
           if [ "${{ inputs.test_push }}" = "true" ]; then python3 notify.py --test >> last_run.log 2>&1 || true; fi
           cat last_run.log
       - name: データを保存
