@@ -28,7 +28,7 @@ EVENT_WORDS = re.compile(
     r"콘서트|투어|팬미팅|공연|내한|演唱會|巡演|見面會|粉絲見面|簽名會|คอนเสิร์ต|แฟนมีต",
     re.IGNORECASE)
 
-VERSION = 5  # 読み取り方を変えたら上げる（それまでのイベントを消して読み直す）
+VERSION = 6  # 読み取り方を変えたら上げる（それまでのイベントを消して読み直す）
 
 # イベントを探すためのニュース検索（Google ニュース）: (検索語, hl, gl, ceid)
 EVENT_QUERIES = [
@@ -58,6 +58,9 @@ SYSTEM = (
     "year_certain は、年が本文に書かれている・記事の日付からはっきり決められるなら true、推測なら false。\n"
     "- 番組表のページでは、これから放送される番組だけを1つずつ（放送日時・局つきで）入れます。"
     "過去の出演作の一覧や、放送日の書かれていない作品紹介は入れないでください。\n"
+    "- station には放送局・配信サービス名（わからなければ空文字）を入れます。"
+    "first_run は、その回や作品が初めて放送・配信されるなら true、再放送・地方局での遅れ放送・"
+    "昔の映画やドラマの放送なら false にします（例: 地方局の平日昼の放送、「再」の印、何年も前の出演回）。\n"
     "- テキストに ［link: https://...］ の形でリンクが付いていれば、その予定の詳しいページのリンクを link に入れます"
     "（番組・記事・公演ごとのページ。なければ空文字）。\n"
     "- region は日本国内なら「国内」、海外なら「海外」。\n"
@@ -81,10 +84,12 @@ SCHEMA = {
                     "place": {"type": "string"},
                     "region": {"type": "string", "enum": ["国内", "海外"]},
                     "year_certain": {"type": "boolean"},
+                    "station": {"type": "string"},
+                    "first_run": {"type": "boolean"},
                     "link": {"type": "string"},
                     "source_id": {"type": "integer"},
                 },
-                "required": ["title", "kind", "date", "date_text", "place", "region", "year_certain", "link", "source_id"],
+                "required": ["title", "kind", "date", "date_text", "place", "region", "year_certain", "station", "first_run", "link", "source_id"],
                 "additionalProperties": False,
             },
         }
@@ -118,6 +123,13 @@ def open_events(conn):
             conn.execute(f"ALTER TABLE events ADD COLUMN {col} {decl}")
     return conn
 
+
+# 全国で初めて放送・配信される出演だけを予定に入れるため、局がわかるときはこの一覧で確かめる
+# （番組表には地方局での過去の回の再放送も載るため。例: 2023年の「相葉マナブ」の地方局での再放送）
+NATIONWIDE = re.compile(
+    r"NHK|日本テレビ|日テレ|テレビ朝日|テレ朝|TBS|テレビ東京|テレ東|フジテレビ|フジ|"
+    r"BS|WOWOW|ABEMA|Netflix|Hulu|U-NEXT|Prime|Amazon|Disney|Lemino|TVer|YouTube|ニッポン放送|TBSラジオ|文化放送|J-WAVE",
+    re.IGNORECASE)
 
 NEWS_TIER = 4  # ニュース記事からの予定（公式・番組表・映画情報より信頼度は下）
 
@@ -178,6 +190,14 @@ def save_events(conn, events: list[dict], sources: list[dict]) -> int:
             print(f"[イベント] 記事（{pub}）より前の予定のため除外: {e['date_text']} {e['title']}")
             continue
         tier = src.get("tier", NEWS_TIER)
+        if e["kind"] == "出演":
+            station = e.get("station", "")
+            if e.get("first_run") is False:
+                print(f"[イベント] 再放送・遅れ放送のため除外: {e['date_text']} {e['title']}（{station}）")
+                continue
+            if station and not NATIONWIDE.search(station):
+                print(f"[イベント] 地方局の放送のため除外: {e['date_text']} {e['title']}（{station}）")
+                continue
         values = (e["title"], e["kind"], day, e["date_text"], e["place"], e["region"],
                   src["url"], src["source"], tier, src.get("label", "ニュース"), int(e.get("year_certain", True)))
         dup = same_event(conn, e["title"], day)

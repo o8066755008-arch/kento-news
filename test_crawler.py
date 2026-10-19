@@ -246,6 +246,19 @@ class CrawlerTest(unittest.TestCase):
         self.assertIn("日曜日の初耳学 ［link: https://thetv.jp/program/123/］", text)
         self.assertNotIn("#top", text)
 
+    def test_reruns_and_local_station_broadcasts_are_dropped(self):
+        events.open_events(self.conn)
+        from datetime import date, timedelta
+        day = (date.today() + timedelta(days=3)).isoformat()
+        e = lambda t, st, fr: {"title": t, "kind": "出演", "date": day, "date_text": "", "place": "",
+                               "region": "国内", "year_certain": True, "station": st, "first_run": fr,
+                               "link": "", "source_id": 0}
+        src = [{"url": "u", "source": "s", "tier": 2, "label": "番組表"}]
+        n = events.save_events(self.conn, [e("相葉マナブ", "テレビ朝日", False), e("アンビリバボーSP", "SAGATV", True),
+                                           e("日曜日の初耳学", "TBS", True), e("新番組", "", True)], src)
+        self.assertEqual(n, 2)
+        self.assertEqual(sorted(r[0] for r in self.conn.execute("SELECT title FROM events")), ["新番組", "日曜日の初耳学"])
+
     def test_notify_new_event(self):
         prev = {"topics": [], "events": ["a|11/3 ライブ"], "youtube": None, "fc": None, "member_no": None,
                 "fc_rank": None, "yt_rank": None}
