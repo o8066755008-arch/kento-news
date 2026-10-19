@@ -1,78 +1,50 @@
+[更新] 2026-10-20 01:37 軽い更新
 [Bing ja-JP] 取得に失敗しました: not well-formed (invalid token): line 1, column 41 / 先頭: b'<!DOCTYPE html><html xml:lang="en" xmlns=http://www.w3.org/1999/xhtml xmlns:Web=http://schemas.live.com/Web><head><meta '
-[Bing th-TH] 取得に失敗しました: not well-formed (invalid token): line 1, column 41 / 先頭: b'<!DOCTYPE html><html xml:lang="en" xmlns=http://www.w3.org/1999/xhtml xmlns:Web=http://schemas.live.com/Web><head><meta '
+[Bing en-US] 取得に失敗しました: not well-formed (invalid token): line 1, column 41 / 先頭: b'<!DOCTYPE html><html xml:lang="en" xmlns=http://www.w3.org/1999/xhtml xmlns:Web=http://schemas.live.com/Web><head><meta '
+[Bing ja-JP] 取得に失敗しました: not well-formed (invalid token): line 1, column 41 / 先頭: b'<!DOCTYPE html><html xml:lang="en" xmlns=http://www.w3.org/1999/xhtml xmlns:Web=http://schemas.live.com/Web><head><meta '
 重複の整理 0 件
-[Google JP] 取得 100 件 / 新規 7 件
-[Google JP] 取得 100 件 / 新規 21 件
-[Google KR] 取得 59 件 / 新規 0 件
+[Google JP] 取得 102 件 / 新規 11 件
+[Google JP] 取得 100 件 / 新規 1 件
+[Google KR] 取得 62 件 / 新規 4 件
 [Google US] 取得 100 件 / 新規 1 件
 [Google SG] 取得 100 件 / 新規 0 件
 [Google PH] 取得 100 件 / 新規 0 件
-[Google TW] 取得 100 件 / 新規 0 件
-[Google HK] 取得 100 件 / 新規 1 件
-[Google TH] 取得 35 件 / 新規 0 件
+[Google TW] 取得 100 件 / 新規 8 件
+[Google HK] 取得 100 件 / 新規 2 件
+[Google TH] 取得 35 件 / 新規 1 件
 [Google VN] 取得 9 件 / 新規 0 件
-[Google ID] 取得 53 件 / 新規 1 件
+[Google ID] 取得 52 件 / 新規 0 件
 [Google MX] 取得 30 件 / 新規 0 件
-[Google BR] 取得 22 件 / 新規 0 件
-[Google FR] 取得 14 件 / 新規 1 件
-[Bing ko-KR] 取得 11 件 / 新規 1 件
-[Bing en-US] 取得 9 件 / 新規 0 件
-[Bing zh-TW] 取得 12 件 / 新規 1 件
-翻訳 6 件
-[AI 使用量] 1 回 / 入力 610 / 出力 256 トークン（約 1.1 円）
-[サムネイル] 31 件を確認 / 画像あり 0 件
-[トピックス] 記事 14 件 → 国内 5 件 / 海外 5 件
-[AI 使用量] 1 回 / 入力 1,780 / 出力 1,376 トークン（約 5.2 円）
-[イベント] 記事 13 件を確認 / 新しい予定 0 件
-[イベント] 告知ページは今日すでに確認済みです
-[AI 使用量] 1 回 / 入力 2,490 / 出力 9 トークン（約 1.5 円）
-[YouTube] A.B.C-Z の公式チャンネルが見つかりません。groups.json に ID を書いてください
-[YouTube] 20th Century の公式チャンネルが見つかりません。groups.json に ID を書いてください
-[YouTube] Travis Japan 677,000 人（Travis Japan）
-[YouTube] Aぇ! group 654,000 人（Aぇ! group）
-[YouTube] Hey! Say! JUMP 896,000 人（Hey! Say! JUMP）
-[YouTube] WEST. 915,000 人（WEST.）
-[YouTube] SixTONES 2,740,000 人（SixTONES）
-[YouTube] 中島健人 258,000 人（中島健人 Official YouTube Channel）
-[YouTube] なにわ男子 1,900,000 人（なにわ男子）
-[YouTube] NEWS 293,000 人（にゅうちゅうぶ | NEWS official）
-[YouTube] Snow Man 4,440,000 人（Snow Man）
-[YouTube] 嵐 3,880,000 人（ARASHI）
-[YouTube] Kis-My-Ft2 863,000 人（Kis-My-Ft2）
-[YouTube] 木村拓哉 2,430,000 人（木村拓哉）
-[YouTube] King & Prince 1,880,000 人（King & Prince）
-[YouTube] timelesz 1,230,000 人（timelesz [タイムレス]）
-[Spotify] SPOTIFY_CLIENT_ID / SPOTIFY_CLIENT_SECRET が未設定です
-[会員数] Wikipedia・まとめページは今日すでに確認済みです
-[手動] 中島健人 member_no 100,000（2026-09-30）
-[手動] Snow Man estimate 1,942,000（2026-10-10）
-[手動] King & Prince estimate 1,160,000（2026-10-10）
-[手動] SixTONES estimate 1,130,000（2026-10-10）
-[手動] timelesz estimate 1,010,000（2026-10-10）
-[手動] なにわ男子 estimate 1,002,000（2026-10-10）
-[手動] Hey! Say! JUMP estimate 960,000（2026-10-10）
-[手動] SUPER EIGHT estimate 850,000（2026-10-10）
-[手動] Kis-My-Ft2 estimate 640,000（2026-10-10）
-[手動] NEWS estimate 460,000（2026-10-10）
-[手動] Aぇ! group estimate 350,000（2026-10-10）
-[手動] Travis Japan estimate 300,000（2026-10-10）
-[手動] 櫻井翔 estimate 140,000（2026-10-10）
-[手動] A.B.C-Z estimate 101,000（2026-10-10）
-[手動] 中島健人 estimate 100,000（2026-10-10）
-[手動] 木村拓哉 estimate 95,000（2026-10-10）
-[手動] 相葉雅紀 estimate 90,000（2026-10-10）
-[手動] 20th Century estimate 74,000（2026-10-10）
-[手動] 横山裕 estimate 59,000（2026-10-10）
-[手動] 中島裕翔 estimate 15,000（2026-10-10）
-[手動] 河合郁人 estimate 6,000（2026-10-10）
-[手動] timelesz の official を削除（公式発表の出典を確認できないため。報道・推計として扱う）
-[会員番号] フォームの回答を読み込みました（有効な回答 0 件）
-[AI 使用量] 1 回 / 入力 1,091 / 出力 9 トークン（約 0.7 円）
-ニュース 791 件 / ファンクラブ 22 グループ → site/data.json
-[通知] 8 件の変化:
-🇯🇵 東京国際映画祭でナビゲーター
-🇯🇵 「男性アイドル部門」受賞と推し活論
-🇯🇵 山田涼介と同い年で驚くタレント2位
-🌏 韓国ファンに“匂わせ”アピール
-ほか 4 件
-[通知] 2 / 2 台に送りました
+[Google BR] 取得 21 件 / 新規 0 件
+[Google FR] 取得 14 件 / 新規 0 件
+[Google JP「中島健人 (ドラマ) when:30d」] 取得 31 件 / 新規 24 件
+[Google JP「中島健人 (映画) when:30d」] 取得 100 件 / 新規 42 件
+[Google JP「中島健人 (CM OR 広告 OR アンバサダー」] 取得 33 件 / 新規 15 件
+[Google JP「中島健人 (雑誌 OR 表紙 OR グラビア O」] 取得 22 件 / 新規 6 件
+[Google JP「中島健人 (インタビュー OR コメント) wh」] 取得 43 件 / 新規 24 件
+[Google JP「中島健人 (ライブ OR ツアー OR コンサー」] 取得 86 件 / 新規 29 件
+[Google JP「中島健人 (番組 OR 出演 OR バラエティ 」] 取得 100 件 / 新規 28 件
+[Google JP「中島健人 (新曲 OR シングル OR アルバム」] 取得 59 件 / 新規 9 件
+[Google JP「中島健人 (timelesz OR "Sexy 」] 取得 29 件 / 新規 20 件
+[Google JP「中島健人 (遊戯王 OR 遊☆戯☆王) when」] 取得 58 件 / 新規 10 件
+[Google JP「中島健人 (ファン OR ファンサ OR 神対応」] 取得 53 件 / 新規 11 件
+[Google JP「中島健人 (写真 OR ビジュアル OR ショッ」] 取得 100 件 / 新規 9 件
+[Google JP「中島健人 (受賞 OR ランキング OR 1位)」] 取得 91 件 / 新規 23 件
+[Google JP「中島健人 (共演 OR 仲良し OR 交流) w」] 取得 31 件 / 新規 16 件
+[Google JP「中島健人 (海外 OR アジア OR 韓国 OR」] 取得 72 件 / 新規 2 件
+[Google JP「中島健人 (舞台挨拶 OR 試写会 OR 会見 」] 取得 62 件 / 新規 4 件
+[Google JP「中島健人 (ちるらん OR "ラブ≠コメディ" 」] 取得 27 件 / 新規 7 件
+[Google JP「(ケンティー OR KENTY OR けんてぃー」] 取得 45 件 / 新規 8 件
+[Google KR「(나카지마 켄토 OR 켄티) (드라마 OR 」] 取得 5 件 / 新規 0 件
+[Google TW「中島健人 (日劇 OR 演唱會 OR 電影 OR」] 取得 15 件 / 新規 13 件
+[Google US「("Kento Nakajima" OR "Na」] 取得 2 件 / 新規 0 件
+[Bing ko-KR] 取得 12 件 / 新規 0 件
+[Bing zh-TW] 取得 12 件 / 新規 0 件
+[Bing th-TH] 取得 12 件 / 新規 0 件
+[Bing ja-JP] 取得 10 件 / 新規 7 件
+[Bing ja-JP] 取得 11 件 / 新規 1 件
+翻訳 29 件
+[AI 使用量] 1 回 / 入力 1,777 / 出力 1,529 トークン（約 5.7 円）
+[サムネイル] 80 件を確認 / 画像あり 0 件
+ニュース 1127 件 / ファンクラブ 22 グループ → site/data.json
+[通知] 知らせる変化はありません
