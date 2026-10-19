@@ -138,6 +138,14 @@ svg.spark{width:100%;height:46px;margin-top:6px}
 .dbar{height:10px;background:var(--line);border-radius:999px;overflow:hidden;margin-top:6px}
 .dbar span{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--deep));border-radius:999px}
 footer{max-width:720px;margin:0 auto;padding:0 16px calc(28px + env(safe-area-inset-bottom));color:var(--sub);font-size:.72rem;line-height:1.6;text-align:center}
+.seg3{display:flex;gap:6px;margin:8px 0 10px}
+.seg3 button{flex:1;border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:999px;padding:7px 0;font:inherit;font-size:.82rem;font-weight:600}
+.seg3 button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.lb2{color:var(--sub);font-size:.8rem;font-weight:700}
+.fc summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:6px}
+.fc summary::-webkit-details-marker{display:none}
+.fc summary .gv{margin-left:auto;color:var(--sub);font-size:.82rem;font-weight:600}
+.topic.open ul{display:block}
 .cbar{display:grid;grid-template-columns:9.6em 1fr 3.2em;gap:8px;align-items:center;margin-top:8px;font-size:.82rem}
 .cbar .cn{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cbar .ct{display:block;height:12px}
@@ -166,32 +174,20 @@ footer{max-width:720px;margin:0 auto;padding:0 16px calc(28px + env(safe-area-in
   <div class="updated" id="updated">読み込み中…</div>
   <nav class="tabs" role="tablist">
     <button role="tab" aria-selected="true" data-tab="home">ホーム</button>
-    <button role="tab" aria-selected="false" data-tab="domestic">国内</button>
-    <button role="tab" aria-selected="false" data-tab="abroad">海外</button>
-    <button role="tab" aria-selected="false" data-tab="events">イベント</button>
-    <button role="tab" aria-selected="false" data-tab="fanclub">FC会員数</button>
+    <button role="tab" aria-selected="false" data-tab="news">ニュース</button>
+    <button role="tab" aria-selected="false" data-tab="events">予定</button>
+    <button role="tab" aria-selected="false" data-tab="fanclub">数字</button>
+    <button role="tab" aria-selected="false" data-tab="settings">設定</button>
   </nav>
 </header>
 <main>
-  <section id="home" data-section>
-    <div id="dash"></div>
-    <div id="sns"></div>
-    <div id="digest"></div>
-  </section>
-  <section id="domestic" data-section hidden>
-    <h2 class="sec">🇯🇵 国内ニュース</h2>
-    <div id="list-domestic"></div>
-  </section>
-  <section id="abroad" data-section hidden>
-    <h2 class="sec">🌏 海外ニュース</h2>
-    <div class="filters" id="filters"></div>
-    <div id="list-abroad"></div>
-  </section>
+  <section id="home" data-section></section>
+  <section id="news" data-section hidden></section>
   <section id="events" data-section hidden></section>
   <section id="fanclub" data-section hidden></section>
+  <section id="settings" data-section hidden></section>
 </main>
-<footer>このアプリはファンが個人で作った<b>非公式</b>のまとめアプリです。STARTO ENTERTAINMENT・ソニーミュージック・ご本人とは関係ありません。<br>
-記事・番組・画像の権利は各配信元にあります。歌詞・公式写真は掲載しません。チケットは必ず公式の窓口で購入してください。</footer>
+<footer>非公式のファンアプリです。公式・ご本人とは関係ありません。</footer>
 <script>
 const LANG = {all: "すべて", ja: "日本", ko: "韓国", zh: "台湾・香港", th: "タイ", vi: "ベトナム",
   id: "インドネシア", en: "英語圏", es: "中南米", pt: "ブラジル", fr: "フランス"};
@@ -243,68 +239,30 @@ function domeTile(g) {
   const fcPts = [...(g.estimate || []), ...(g.member_no || [])].sort((a, b) => a.date.localeCompare(b.date));
   const fc = fcPts.length ? Math.max(...fcPts.map(p => p.value)) : null;
   const pct = fc ? Math.min(100, Math.round(fc / target * 100)) : 0;
-  const yt = g.youtube || [], ytG = growth(yt), fcG = growth(fcPts);
+  const fcG = growth(fcPts);
   const shortN = v => v >= 10000 ? (v / 10000).toLocaleString("ja-JP", {maximumFractionDigits: 1}) + "万" : num(v);
-  return `<div class="tile wide dome"><div class="lb">🏟 東京ドームへの道</div>
+  return `<div class="card dome"><div class="lb2">🏟 東京ドームへの道</div>
     <div class="sub">「必ずドームに連れていく」（2026年7月・ツアー最終日）</div>
     ${fc ? `<div class="dm"><span>FC会員</span><b>${shortN(fc)}人</b><span class="pct">${pct}%</span></div>
       <div class="dbar"><span style="width:${pct}%"></span></div>
       <div class="sub">ドーム2日公演（約${shortN(target)}人）が目安 ${fc < target ? `・あと約${shortN(target - fc)}人` : "・目安に到達 🎉"}${fcG && fcG.diff ? `・${fcG.from}から +${shortN(fcG.diff)}` : ""}</div>` : ""}
-    ${yt.length ? `<div class="dm"><span>YouTube</span><b>${shortN(yt.at(-1).value)}人</b>
-      <span class="pct">${ytG ? (ytG.diff >= 0 ? "+" : "") + shortN(ytG.diff) + `（${ytG.days}日）` : "記録開始"}</span></div>` : ""}
+
     <div class="note">東京ドームの収容人数（約5.5万人）×2日を目安にした、アプリ独自の進捗です。公式の基準ではありません。</div></div>`;
 }
 
-function renderDash() {
-  const g = data.fanclub[DASH_NAME] || {};
-  const el = document.getElementById("dash");
-  const short = v => v >= 10000 ? (v / 10000).toLocaleString("ja-JP", {maximumFractionDigits: 1}) + "万" : num(v);
-  const last = k => (g[k] || []).at(-1);
-  // FC：会員番号（ファン・本人の報告）を主に、サイトの推計を添える
-  const mno = last("member_no"), fc = fcLatest(g);
-  const fcTile = `<div class="tile"><div class="lb">🎫 ファンクラブ</div>
-    ${mno ? `<div class="vv">${short(mno.value)}<small>番台</small></div><div class="sub">会員番号ベース（${esc(mno.date)}）</div>`
-      : fc ? `<div class="vv">${short(fc.value)}<small>人</small></div>` : `<div class="vv">—</div>`}
-    ${fc ? `<div class="sub">${fc.press ? "推計" : "公式"} <b>${short(fc.value)}人</b>（${esc(fc.date)}）</div>` : ""}
-</div>`;
-  // YouTube
-  const yt = g.youtube || [], ytl = yt.at(-1), ytp = yt.at(-2);
-  const ytTile = `<div class="tile"><div class="lb">▶️ YouTube 登録者</div>
-    ${ytl ? `<div class="vv">${short(ytl.value)}<small>人</small></div>
-      <div class="sub">${ytp && ytl.value !== ytp.value ? `<span class="${ytl.value > ytp.value ? "up" : "down"}">${ytl.value > ytp.value ? "+" : ""}${num(ytl.value - ytp.value)}</span>（前日比）` : `${esc(ytl.date)} 時点`}</div>
-      ${spark(yt)}`
-      : `<div class="vv">—</div><div class="sub">次回の更新から記録します</div>`}</div>`;
-  // ニュース量
-  const now = Date.now(), within = (n, days) => n.published && now - new Date(n.published) < days * 864e5;
-  const d3 = data.news.filter(n => within(n, 3)), d30 = data.news.filter(n => within(n, 30));
-  const abroad30 = d30.filter(n => n.lang !== "ja");
-  const newsTile = `<div class="tile"><div class="lb">📰 ニュース</div>
-    <div class="vv">${d3.length}<small>件</small></div><div class="sub">ここ3日間（30日間で <b>${d30.length}件</b>）</div></div>`;
-  // 海外での話題：30日間の国・地域別の記事数（どこで話題になっているかの目安）
-  const byLang = {};
-  abroad30.forEach(n => byLang[n.lang] = (byLang[n.lang] || 0) + 1);
-  const ranked = Object.entries(byLang).sort((a, b) => b[1] - a[1]);
-  const abroadTile = `<div class="tile"><div class="lb">🌏 海外ニュース</div>
-    <div class="vv">${abroad30.length}<small>件</small></div>
-    <div class="sub">30日間・<b>${ranked.length}</b>の国と地域</div></div>`;
-  const maxC = ranked.length ? ranked[0][1] : 1;
-  const countryTile = ranked.length ? `<div class="tile wide"><div class="lb">📊 国・地域別のニュース数（30日間）</div>
-    ${ranked.map(([l, c], i) => `<div class="cbar" title="${esc(LANG[l] || l)}：${c}件">
-      <span class="cn">${i + 1}. ${FLAG[l] || ""} ${esc(LANG[l] || l)}</span>
-      <span class="ct"><span class="cf" style="width:${Math.max(3, c / maxC * 100)}%"></span></span>
-      <span class="cv">${c}件</span></div>`).join("")}
-    <div class="sub">記事の言語・配信地域で数えています（台湾・香港は中国語、英語圏はアメリカ・シンガポール・フィリピンなど）。日本のメディアは ${d30.length - abroad30.length}件。</div></div>` : "";
-  const next = upcomingEvents().filter(e => e.date).slice(0, 4);
-  const nextTile = `<div class="tile wide"><div class="lb">🗓 次の予定</div>
+function renderHome() {
+  const d = data.digest;
+  const next = upcomingEvents().filter(e => e.date).slice(0, 3);
+  const nextBox = `<h2 class="sec">🗓 次の予定</h2><div class="card">
     ${next.length ? next.map(e => `<div class="nx"><b>${Number(e.date.slice(5, 7))}/${Number(e.date.slice(8))}${e.time ? `<small> ${esc(e.time)}</small>` : ""}</b>
       <span>${KIND_ICON[e.kind] || "📌"} ${esc(e.title)}</span><span class="src t${e.tier}">${esc(e.label)}</span></div>`).join("")
-      : `<div class="sub">日付の決まった予定はまだありません</div>`}
-    <button class="pbtn ghost" data-goto="events">予定をすべて見る</button></div>`;
-  el.innerHTML = `<h2 class="sec">${DASH_NAME} ダッシュボード</h2><div class="dash">${nextTile}${domeTile(g)}${fcTile}${ytTile}${newsTile}${abroadTile}${countryTile}
-    <div class="tile wide" id="push"></div></div>`;
-  renderPush();
+      : `<div class="note">日付の決まった予定はまだありません</div>`}
+    <button class="pbtn ghost" data-goto="events">予定をすべて見る ›</button></div>`;
+  document.getElementById("home").innerHTML = (d && d.topics.length
+    ? renderSlides(d) + `<div id="topicPanel"></div><p class="note">見出しをもとに AI がまとめています（${esc(d.generated)} 作成）。</p>`
+    : `<div class="empty">ここ数日のトピックはまだありません</div>`) + nextBox;
+  syncDots();
 }
-
 // ---- 通知（Web Push）
 const isStandalone = () => navigator.standalone || matchMedia("(display-mode: standalone)").matches;
 const b64ToBytes = b64 => {
@@ -329,7 +287,7 @@ async function registerSub(sub) {
 async function renderPush(subText) {
   const el = document.getElementById("push");
   if (!el) return;
-  const head = `<div class="lb">🔔 通知</div>`;
+  const head = "";  // 見出しは設定タブの「🔔 通知」
   if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) {
     el.innerHTML = head + (isStandalone() ? `<div class="sub">この端末では通知を使えません（iPadOS / iOS 16.4 以降が必要です）。</div>`
       : `<div class="sub">通知を受け取るには、Safari の共有ボタン →「ホーム画面に追加」で追加したアプリから開いてください。</div>`);
@@ -366,7 +324,7 @@ async function turnOnPush() {
     const sub = (await reg.pushManager.getSubscription()) ||
       await reg.pushManager.subscribe({userVisibleOnly: true, applicationServerKey: b64ToBytes(data.vapid_public_key)});
     if (await registerSub(sub.toJSON())) {
-      el.innerHTML = `<div class="lb">🔔 通知</div><div class="sub">通知をオンにしました ✓ 次の更新（3時間おき）から届きます。</div>`;
+      el.innerHTML = `<div class="sub">通知をオンにしました ✓ 次の更新（3時間おき）から届きます。</div>`;
     } else {
       renderPush(JSON.stringify(sub));  // 自動登録の設定がないときは、手で登録してもらう
     }
@@ -384,19 +342,19 @@ const SNS_LINKS = [
   {icon: "🌐", name: "公式サイト", url: "https://www.nakajimakento.com/"},
   {icon: "🎫", name: "FC I AM:U", url: "https://www.fc-member.familyclub.jp/page/index/f/NK"},
 ];
-const SNS_WORDS = /インスタ|instagram|tiktok|ティックトック|\bX\b|ポスト|投稿|SNS|ストーリー|インライ|生配信|ライブ配信|更新/i;
+// SNS の投稿を取り上げた記事だけを拾う（「更新」「投稿」だけでは広すぎるので使わない）
+const SNS_WORDS = /インスタ|instagram|tiktok|ティックトック|インライ|ストーリーズ|(X|Ｘ|ツイッター|Twitter)(で|に|の投稿|を更新)|ポスト|SNSで|SNSに|SNS投稿|自撮り|オフショ/i;
 
-function renderSns() {
-  const now = Date.now();
-  const posts = data.news.filter(n => SNS_WORDS.test(n.title) && n.published && now - new Date(n.published) < 14 * 864e5).slice(0, 5);
-  document.getElementById("sns").innerHTML = `<h2 class="sec">📱 公式SNS</h2>
+function renderSettings() {
+  document.getElementById("settings").innerHTML = `<h2 class="sec">📱 公式アカウント・サイト</h2>
     <div class="snsl">${SNS_LINKS.map(l => `<a href="${l.url}" target="_blank" rel="noopener"><span>${l.icon}</span>${l.name}</a>`).join("")}</div>
-    <div class="card"><div class="lb" style="color:var(--sub);font-size:.8rem;font-weight:600">SNSの話題（ここ2週間のニュース）</div>
-      ${posts.length ? posts.map(n => `<a class="snsn" href="${esc(n.link)}" target="_blank" rel="noopener"><b>${esc(n.title)}</b><small>${esc(n.source)}・${fmtDate(n.published)}</small></a>`).join("")
-        : `<div class="note">ここ2週間で SNS の投稿を取り上げたニュースはまだありません</div>`}
-      <p class="note">Instagram・X・TikTok の投稿そのものは、各サービスの規約で自動収集が禁止されているため、公式アカウントへのリンクと、投稿を取り上げたニュースを表示しています。</p></div>`;
+    <h2 class="sec">🔔 通知</h2><div class="card" id="push"></div>
+    <h2 class="sec">ℹ️ このアプリについて</h2><div class="card note">
+      ファンが個人で作った<b>非公式</b>のまとめアプリです。STARTO ENTERTAINMENT・ソニーミュージック・ご本人とは関係ありません。<br>
+      ニュース・予定・数字は3時間おきに自動で集めています。AI が読み取った内容を含むため、大事な情報は必ず公式でご確認ください。<br>
+      記事・番組・画像の権利は各配信元にあります。歌詞・公式写真は掲載しません。チケットは必ず公式の窓口で購入してください。</div>`;
+  renderPush();
 }
-
 function renderSlides(d) {
   const top = d.topics.slice(0, 8);
   const flags = Object.entries(d.lang_counts || {}).sort((a, b) => b[1] - a[1])
@@ -418,7 +376,7 @@ function renderSlides(d) {
         <ul>${(t.points && t.points.length ? t.points : [t.summary]).map(p => `<li>${esc(p)}</li>`).join("")}</ul>
         <button data-open-topic="${d.topics.indexOf(t)}">関連記事 ${t.articles.length} 件を見る ›</button></div></div>`;
   }).join("");
-  return `<h2 class="sec">ハイライト</h2><div class="slides" id="slides">${cover}${slides}</div>
+  return `<h2 class="sec">✨ ハイライト（ここ${d.days}日間）</h2><div class="slides" id="slides">${cover}${slides}</div>
     <div class="dots" id="dots">${"<i></i>".repeat(top.length + 1)}</div>`;
 }
 
@@ -431,25 +389,16 @@ function syncDots() {
 }
 document.addEventListener("scroll", e => { if (e.target.id === "slides") syncDots(); }, true);
 
-function renderDigest() {
-  const d = data.digest, el = document.getElementById("digest");
-  if (!d || !d.topics.length) { el.innerHTML = ""; return; }
-  el.innerHTML = renderSlides(d) + `<h2 class="sec">ここ${d.days}日間のトピックス</h2>` + ["国内", "海外"].map(region => {
-    const topics = d.topics.filter(t => t.region === region);
-    if (!topics.length) return "";
-    return `<h3 class="region">${region === "国内" ? "🇯🇵 国内" : "🌏 海外"}</h3>` + topics.map(t => `
-      <details class="card topic" id="topic-${d.topics.indexOf(t)}">
-        <summary>${thumb((t.articles.find(a => a.image) || {}).image, "hero")}<div class="t">${esc(t.title)}</div>
-          <div class="o">${esc(t.summary)}</div>
-          <div class="meta"><span class="toggle">関連記事 ${t.articles.length} 件を表示</span></div></summary>
-        <ul>${t.articles.map(a => `<li><a class="row" href="${esc(a.link)}" target="_blank" rel="noopener">
-          <span class="rt"><b>${esc(a.title)}</b>
-          <span class="src">${a.lang !== "ja" ? (FLAG[a.lang] || "") + " " + (LANG[a.lang] || a.lang) + " ・ " : ""}${esc(a.source)} ・ ${fmtDate(a.published)}</span></span>
-          <span class="go">記事を読む ›</span></a></li>`).join("")}</ul>
-      </details>`).join("");
-  }).join("") + `<p class="note">見出しをもとに AI がまとめています（${esc(d.generated)} 作成）。詳しくは各記事をご覧ください。</p>`;
+function showTopic(i) {
+  const t = data.digest.topics[i], el = document.getElementById("topicPanel");
+  el.innerHTML = `<div class="card topic open"><div class="t">${t.region === "国内" ? "🇯🇵" : "🌏"} ${esc(t.title)}</div>
+    <div class="o">${esc(t.summary)}</div>
+    <ul>${t.articles.map(a => `<li><a class="row" href="${esc(a.link)}" target="_blank" rel="noopener">
+      <span class="rt"><b>${esc(a.title)}</b>
+      <span class="src">${a.lang !== "ja" ? (FLAG[a.lang] || "") + " " + (LANG[a.lang] || a.lang) + " ・ " : ""}${esc(a.source)} ・ ${fmtDate(a.published)}</span></span>
+      <span class="go">記事を読む ›</span></a></li>`).join("")}</ul></div>`;
+  el.scrollIntoView({behavior: "smooth", block: "start"});
 }
-
 const newsCard = n => `
     <div class="card news">
       ${listThumb(n)}
@@ -460,24 +409,41 @@ const newsCard = n => `
         ${translateUrl(n) ? `<a class="tr" href="${esc(translateUrl(n))}" target="_blank" rel="noopener">Google翻訳で開く</a>` : ""}</div>
     </div>`;
 
+let newsMode = "domestic";
 function renderNews() {
-  renderDash();
-  renderSns();
-  renderDigest();
-  syncDots();
-  const domestic = data.news.filter(n => n.lang === "ja");
-  document.getElementById("list-domestic").innerHTML =
-    domestic.length ? domestic.map(newsCard).join("") : `<div class="empty">ニュースはまだありません</div>`;
-  const abroad = data.news.filter(n => n.lang !== "ja");
-  const counts = {};
-  abroad.forEach(n => counts[n.lang] = (counts[n.lang] || 0) + 1);
-  document.getElementById("filters").innerHTML = [["all", abroad.length], ...Object.entries(counts).sort((a, b) => b[1] - a[1])]
-    .map(([k, c]) => `<button data-f="${k}" class="${k === filter ? "on" : ""}">${k === "all" ? "すべて" : (FLAG[k] || "") + " " + (LANG[k] || k)} ${c}</button>`).join("");
-  const items = abroad.filter(n => filter === "all" || n.lang === filter);
-  document.getElementById("list-abroad").innerHTML = SAFARI_TIP +
-    (items.length ? items.map(newsCard).join("") : `<div class="empty">海外のニュースはまだありません</div>`);
+  const now = Date.now(), within = (n, days) => n.published && now - new Date(n.published) < days * 864e5;
+  const domestic = data.news.filter(n => n.lang === "ja"), abroad = data.news.filter(n => n.lang !== "ja");
+  const sns = data.news.filter(n => SNS_WORDS.test(n.title));
+  const seg = [["domestic", "🇯🇵 国内", domestic.length], ["abroad", "🌏 海外", abroad.length], ["sns", "📱 SNSの話題", sns.length]]
+    .map(([k, label, c]) => `<button data-news="${k}" class="${k === newsMode ? "on" : ""}">${label} ${c}</button>`).join("");
+  let body = "";
+  if (newsMode === "domestic") {
+    body = domestic.length ? domestic.map(newsCard).join("") : `<div class="empty">ニュースはまだありません</div>`;
+  } else if (newsMode === "sns") {
+    body = `<p class="note">Instagram・X・TikTok の投稿そのものは各サービスの規約で自動収集できないため、投稿を取り上げたニュースを表示しています。公式アカウントは「設定」タブから開けます。</p>` +
+      (sns.length ? sns.map(newsCard).join("") : `<div class="empty">SNS の投稿を取り上げたニュースはまだありません</div>`);
+  } else {
+    // 30日間の国・地域別の記事数（どこで話題になっているかの目安）
+    const counts = {};
+    abroad.filter(n => within(n, 30)).forEach(n => counts[n.lang] = (counts[n.lang] || 0) + 1);
+    const ranked = Object.entries(counts).sort((a, b) => b[1] - a[1]), maxC = ranked.length ? ranked[0][1] : 1;
+    const chart = ranked.length ? `<div class="card"><div class="lb2">📊 国・地域別のニュース数（30日間）</div>
+      ${ranked.map(([l, c], i) => `<div class="cbar" title="${esc(LANG[l] || l)}：${c}件">
+        <span class="cn">${i + 1}. ${FLAG[l] || ""} ${esc(LANG[l] || l)}</span>
+        <span class="ct"><span class="cf" style="width:${Math.max(3, c / maxC * 100)}%"></span></span>
+        <span class="cv">${c}件</span></div>`).join("")}
+      <div class="note">記事の言語・配信地域で数えています（台湾・香港は中国語、英語圏はアメリカ・シンガポール・フィリピンなど）。</div></div>` : "";
+    const all = {};
+    abroad.forEach(n => all[n.lang] = (all[n.lang] || 0) + 1);
+    const filters = `<div class="filters">${[["all", abroad.length], ...Object.entries(all).sort((a, b) => b[1] - a[1])]
+      .map(([k, c]) => `<button data-f="${k}" class="${k === filter ? "on" : ""}">${k === "all" ? "すべて" : (FLAG[k] || "") + " " + (LANG[k] || k)} ${c}</button>`).join("")}</div>`;
+    const items = abroad.filter(n => filter === "all" || n.lang === filter);
+    body = chart + filters + SAFARI_TIP + (items.length ? items.map(newsCard).join("") : `<div class="empty">海外のニュースはまだありません</div>`);
+  }
+  document.getElementById("news").innerHTML = `<h2 class="sec">📰 ニュース</h2>
+    <div class="note">ここ3日間 <b>${data.news.filter(n => within(n, 3)).length}件</b>・30日間 <b>${data.news.filter(n => within(n, 30)).length}件</b></div>
+    <div class="seg3">${seg}</div>${body}`;
 }
-
 // ---- イベント
 const KIND_ICON = {出演: "📺", イベント: "🎉", コンサート: "🎤", 発売日: "💿", チケット: "🎫", オフ会: "🤝", その他: "📌"};
 const MAIN_KINDS = ["出演", "イベント", "コンサート", "発売日", "チケット"];  // 予定がなくても常に表示するカテゴリ
@@ -588,8 +554,13 @@ function renderFanclub() {
       <div class="t">📮 あなたの会員番号を教えてください</div>
       <div class="o">下3桁は伏せたまま（例: 1234xxx）、グループと番号だけを匿名で送れます。集まった番号から最新の会員番号を推定します。</div></a>` : "";
   const note = `<p class="note">公式発表はニュース・Wikipedia に載ったときだけ更新されます。会員番号は退会者を含む通し番号のため、今の会員数とは一致しません。</p>`;
-  document.getElementById("fanclub").innerHTML = renderRanking() + form + (groups.length ? groups.map(([name, g]) => `
-    <div class="card fc"><div class="t">${esc(name)}${meta(name).solo ? ` <span class="chip">ソロ</span>` : ""}${meta(name).ended ? ` <span class="chip">活動終了</span>` : ""}</div>${METRICS.map(m => metricRow(m, g[m.key])).join("")}${otherSites(g)}</div>`).join("") + note
+  const me = data.fanclub[DASH_NAME] || {};
+  const mine = `<h2 class="sec">🏟 ${DASH_NAME}</h2>${domeTile(me)}
+    <div class="card fc"><div class="lb2">数字の内訳と推移</div>${METRICS.map(m => metricRow(m, me[m.key])).join("")}${otherSites(me)}</div>`;
+  const others = groups.filter(([name]) => name !== DASH_NAME);
+  document.getElementById("fanclub").innerHTML = mine + `<h2 class="sec">📊 STARTO の中で</h2>` + renderRanking() + form +
+    `<h2 class="sec">ほかのグループ・ソロ</h2>` + (others.length ? others.map(([name, g]) => `
+    <details class="card fc"><summary class="t">${esc(name)}${meta(name).solo ? ` <span class="chip">ソロ</span>` : ""}${meta(name).ended ? ` <span class="chip">活動終了</span>` : ""}${(fcLatest(g) || ytLatest(g)) ? `<span class="gv">${num((fcLatest(g) || ytLatest(g)).value)}${fcLatest(g) ? "人" : "人（YouTube）"}</span>` : ""}</summary>${METRICS.map(m => metricRow(m, g[m.key])).join("")}${otherSites(g)}</details>`).join("") + note
     : `<div class="empty">まだデータがありません<br>毎日の記録が始まると、ここに推移が表示されます</div>`);
 }
 
@@ -613,11 +584,9 @@ document.addEventListener("click", e => {
     }
   }
   const ot = e.target.closest("[data-open-topic]");
-  if (ot) {
-    const el = document.getElementById("topic-" + ot.dataset.openTopic);
-    el.open = true;
-    el.scrollIntoView({behavior: "smooth", block: "start"});
-  }
+  if (ot) showTopic(Number(ot.dataset.openTopic));
+  const nm = e.target.closest("[data-news]");
+  if (nm) { newsMode = nm.dataset.news; renderNews(); }
   const rk = e.target.closest("[data-rank]");
   if (rk) { rankBy = rk.dataset.rank; renderFanclub(); }
   const go = e.target.closest("[data-goto]");
@@ -628,13 +597,15 @@ document.addEventListener("click", e => {
   if (f) { filter = f.dataset.f; renderNews(); }
 });
 
+function renderAll() { renderHome(); renderNews(); renderEvents(); renderFanclub(); renderSettings(); }
+
 fetch("data.json", {cache: "no-store"}).then(r => r.json()).then(d => {
   data = d;
   document.getElementById("updated").textContent = `最終更新: ${d.updated}`;
-  renderNews(); renderEvents(); renderFanclub();
+  renderAll();
 }).catch(() => {
   document.getElementById("updated").textContent = "データを読み込めませんでした";
-  renderNews(); renderEvents(); renderFanclub();
+  renderAll();
 });
 
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js");
