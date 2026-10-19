@@ -9,6 +9,7 @@ import crawler
 import digest
 import notify
 import events
+import videos
 import thumbnails
 import fanclub
 
@@ -276,6 +277,17 @@ class CrawlerTest(unittest.TestCase):
         self.assertEqual(notify.reminders(self.conn, now, {}), [])  # 2回目は送らない
         self.assertEqual(notify.reminders(self.conn, datetime(2026, 10, 26, 6, 0), {}),
                          ["🎫 今日 23:59 東京公演 FC先行 申込締切"])
+
+    def test_video_items(self):
+        self.assertEqual([videos.guess_lang(t) for t in ["中島健人のライブ", "나카지마 켄토", "中島健人演唱會", "Kento live"]],
+                         ["ja", "ko", "zh", "en"])
+        it = videos.to_item("abc", {"title": "나카지마 켄토 팬미팅", "channelTitle": "ch", "publishedAt": "2026-10-18T12:00:00Z",
+                                    "thumbnails": {"high": {"url": "https://i.ytimg.com/vi/abc/hq.jpg"}}})
+        self.assertEqual((it["link"], it["lang"], it["title_ja"], it["kind"]),
+                         ("https://www.youtube.com/watch?v=abc", "ko", None, "video"))
+        crawler.save(self.conn, [it])
+        self.assertEqual(self.conn.execute("SELECT kind, image FROM articles").fetchall(),
+                         [("video", "https://i.ytimg.com/vi/abc/hq.jpg")])
 
     def test_notify_new_event(self):
         prev = {"topics": [], "events": ["a|11/3 ライブ"], "youtube": None, "fc": None, "member_no": None,

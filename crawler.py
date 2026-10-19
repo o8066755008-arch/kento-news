@@ -51,12 +51,31 @@ SOURCES = [
 ]
 
 # Bing ニュース: (言語, 検索語, market)。リンクが記事に直接つながり、サムネイルも付く
+# 1つの検索で取れる記事は100件までなので、話題ごとに分けて検索して取りこぼしを減らす（直近30日）
+JP_TOPICS = [
+    "ドラマ", "映画", "CM OR 広告 OR アンバサダー", "雑誌 OR 表紙 OR グラビア OR 撮り下ろし", "インタビュー OR コメント",
+    "ライブ OR ツアー OR コンサート OR 公演", "番組 OR 出演 OR バラエティ OR ラジオ", "新曲 OR シングル OR アルバム OR MV OR 配信",
+    "timelesz OR \"Sexy Zone\" OR セクゾ OR 菊池風磨 OR 佐藤勝利 OR 松島聡", "遊戯王 OR 遊☆戯☆王", "ファン OR ファンサ OR 神対応",
+    "写真 OR ビジュアル OR ショット", "受賞 OR ランキング OR 1位", "共演 OR 仲良し OR 交流", "海外 OR アジア OR 韓国 OR 台湾",
+    "舞台挨拶 OR 試写会 OR 会見 OR 発表会", "ちるらん OR \"ラブ≠コメディ\" OR \"SとX\"",
+]
+TOPIC_SOURCES = (
+    [("ja", f"中島健人 ({t}) when:30d", "ja", "JP", "JP:ja") for t in JP_TOPICS]
+    + [("ja", "(ケンティー OR KENTY OR けんてぃー) when:30d", "ja", "JP", "JP:ja"),
+       ("ko", "(나카지마 켄토 OR 켄티) (드라마 OR 콘서트 OR 팬미팅 OR 영화 OR 방송) when:30d", "ko", "KR", "KR:ko"),
+       ("zh", "中島健人 (日劇 OR 演唱會 OR 電影 OR 綜藝 OR 粉絲) when:30d", "zh-TW", "TW", "TW:zh-Hant"),
+       ("en", f"({EN_QUERY}) (drama OR Netflix OR concert OR film OR interview) when:30d", "en-US", "US", "US:en")]
+)
+
 BING_SOURCES = [
     ("ja", "中島健人", "ja-JP"),
     ("ko", "나카지마 켄토", "ko-KR"),
     ("en", "Kento Nakajima", "en-US"),  # Bing は OR と引用符の組み合わせで0件になるため
     ("zh", "中島健人", "zh-TW"),
     ("th", "Kento Nakajima", "th-TH"),
+    ("ja", "ケンティー", "ja-JP"),
+    ("ja", "中島健人 ドラマ", "ja-JP"),
+    ("ja", "中島健人 ライブ", "ja-JP"),
 ]
 
 
@@ -163,7 +182,8 @@ def open_db(path: Path = DB_PATH) -> sqlite3.Connection:
         )"""
     )
     cols = {r[1] for r in conn.execute("PRAGMA table_info(articles)")}
-    for col, decl in [("image", "TEXT"), ("title_key", "TEXT"), ("image_tried", "INTEGER DEFAULT 0")]:
+    for col, decl in [("image", "TEXT"), ("title_key", "TEXT"), ("image_tried", "INTEGER DEFAULT 0"),
+                      ("kind", "TEXT DEFAULT 'news'")]:
         if col not in cols:
             conn.execute(f"ALTER TABLE articles ADD COLUMN {col} {decl}")
     missing = conn.execute("SELECT link, title FROM articles WHERE title_key IS NULL "
@@ -199,10 +219,10 @@ def save(conn: sqlite3.Connection, items: list[dict]) -> int:
                 conn.execute("UPDATE articles SET image = ? WHERE link = ?", (it["image"], row[0]))
             continue
         conn.execute(
-            "INSERT INTO articles (link, title, title_ja, lang, source, published, image, title_key) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO articles (link, title, title_ja, lang, source, published, image, title_key, kind) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (it["link"], it["title"], it["title_ja"], it["lang"], it["source"], it["published"],
-             it.get("image"), key),
+             it.get("image"), key, it.get("kind", "news")),
         )
         added += 1
     conn.commit()
@@ -255,6 +275,8 @@ def main() -> int:
     total = 0
     feeds = [(lang, f"Google {gl}", feed_url(q, hl, gl, ceid), parse_rss)
              for lang, q, hl, gl, ceid in SOURCES]
+    feeds += [(lang, f"Google {gl}「{q[:24]}」", feed_url(q, hl, gl, ceid), parse_rss)
+              for lang, q, hl, gl, ceid in TOPIC_SOURCES]
     feeds += [(lang, f"Bing {mkt}", bing_url(q, mkt), parse_bing_rss) for lang, q, mkt in BING_SOURCES]
     for lang, name, url, parser in feeds:
         body = b""

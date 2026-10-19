@@ -8,13 +8,13 @@ from crawler import open_db
 SITE_DIR = Path(__file__).resolve().parent / "site"
 
 
-def build(conn, out: Path = SITE_DIR / "data.json", limit: int = 800) -> dict:
+def build(conn, out: Path = SITE_DIR / "data.json", limit: int = 3000) -> dict:
     news = [
         {"title": title_ja or title, "original": title if lang != "ja" else None,
          "translated": bool(title_ja), "lang": lang, "source": source,
-         "published": published, "link": link, "image": image}
-        for title, title_ja, lang, source, published, link, image in conn.execute(
-            "SELECT title, title_ja, lang, source, published, link, image FROM articles "
+         "published": published, "link": link, "image": image, "kind": kind or "news"}
+        for title, title_ja, lang, source, published, link, image, kind in conn.execute(
+            "SELECT title, title_ja, lang, source, published, link, image, kind FROM articles "
             "ORDER BY published DESC LIMIT ?", (limit,))
     ]
     # {グループ: {metric: [{date, value, source}, ...]}}

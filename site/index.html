@@ -139,7 +139,8 @@ svg.spark{width:100%;height:46px;margin-top:6px}
 .dbar span{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--deep));border-radius:999px}
 footer{max-width:720px;margin:0 auto;padding:0 16px calc(28px + env(safe-area-inset-bottom));color:var(--sub);font-size:.72rem;line-height:1.6;text-align:center}
 .seg3{display:flex;gap:6px;margin:8px 0 10px}
-.seg3 button{flex:1;border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:999px;padding:7px 0;font:inherit;font-size:.82rem;font-weight:600}
+.seg3{flex-wrap:wrap}
+.seg3 button{flex:1 1 22%;border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:999px;padding:7px 0;font:inherit;font-size:.82rem;font-weight:600}
 .seg3 button.on{background:var(--accent);border-color:var(--accent);color:#fff}
 .lb2{color:var(--sub);font-size:.8rem;font-weight:700}
 .fc summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:6px}
@@ -412,13 +413,19 @@ const newsCard = n => `
 let newsMode = "domestic";
 function renderNews() {
   const now = Date.now(), within = (n, days) => n.published && now - new Date(n.published) < days * 864e5;
-  const domestic = data.news.filter(n => n.lang === "ja"), abroad = data.news.filter(n => n.lang !== "ja");
-  const sns = data.news.filter(n => SNS_WORDS.test(n.title));
-  const seg = [["domestic", "🇯🇵 国内", domestic.length], ["abroad", "🌏 海外", abroad.length], ["sns", "📱 SNSの話題", sns.length]]
+  // 記事（国内・海外・SNS の話題）と動画は重ならないように分ける
+  const articles = data.news.filter(n => n.kind !== "video"), videos = data.news.filter(n => n.kind === "video");
+  const domestic = articles.filter(n => n.lang === "ja"), abroad = articles.filter(n => n.lang !== "ja");
+  const sns = articles.filter(n => SNS_WORDS.test(n.title));
+  const seg = [["domestic", "🇯🇵 国内", domestic.length], ["abroad", "🌏 海外", abroad.length],
+               ["sns", "📱 SNS", sns.length], ["video", "▶️ 動画", videos.length]]
     .map(([k, label, c]) => `<button data-news="${k}" class="${k === newsMode ? "on" : ""}">${label} ${c}</button>`).join("");
   let body = "";
   if (newsMode === "domestic") {
     body = domestic.length ? domestic.map(newsCard).join("") : `<div class="empty">ニュースはまだありません</div>`;
+  } else if (newsMode === "video") {
+    body = `<p class="note">公式チャンネルの新着と、YouTube で名前を検索して見つかった動画（ここ2週間）です。公式以外の動画も含みます。</p>` +
+      (videos.length ? videos.map(newsCard).join("") : `<div class="empty">動画はまだありません</div>`);
   } else if (newsMode === "sns") {
     body = `<p class="note">Instagram・X・TikTok の投稿そのものは各サービスの規約で自動収集できないため、投稿を取り上げたニュースを表示しています。公式アカウントは「設定」タブから開けます。</p>` +
       (sns.length ? sns.map(newsCard).join("") : `<div class="empty">SNS の投稿を取り上げたニュースはまだありません</div>`);
