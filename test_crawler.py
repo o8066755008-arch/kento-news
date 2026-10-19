@@ -259,6 +259,24 @@ class CrawlerTest(unittest.TestCase):
         self.assertEqual(n, 2)
         self.assertEqual(sorted(r[0] for r in self.conn.execute("SELECT title FROM events")), ["新番組", "日曜日の初耳学"])
 
+    def test_reminders_once_before_broadcast_and_ticket_deadline(self):
+        from datetime import datetime
+        events.open_events(self.conn)
+        rows = [("a", "出演", "2026-10-25", "22:00", "日曜日の初耳学"),
+                ("b", "チケット", "2026-10-26", "23:59", "東京公演 FC先行 申込締切"),
+                ("c", "発売日", "2026-10-26", "", "新曲発売"),
+                ("d", "出演", "2026-10-25", "", "時刻なしの出演")]
+        for eid, kind, day, hhmm, title in rows:
+            self.conn.execute("INSERT INTO events (id, kind, date, time, title, date_text) VALUES (?, ?, ?, ?, ?, '')",
+                              (eid, kind, day, hhmm, title))
+        now = datetime(2026, 10, 25, 20, 0)
+        lines = notify.reminders(self.conn, now, {})
+        self.assertEqual(sorted(lines), sorted(["📺 まもなく 22:00〜 日曜日の初耳学", "🎫 明日 23:59 東京公演 FC先行 申込締切",
+                                                "💿 明日 新曲発売", "📺 今日 時刻なしの出演"]))
+        self.assertEqual(notify.reminders(self.conn, now, {}), [])  # 2回目は送らない
+        self.assertEqual(notify.reminders(self.conn, datetime(2026, 10, 26, 6, 0), {}),
+                         ["🎫 今日 23:59 東京公演 FC先行 申込締切"])
+
     def test_notify_new_event(self):
         prev = {"topics": [], "events": ["a|11/3 ライブ"], "youtube": None, "fc": None, "member_no": None,
                 "fc_rank": None, "yt_rank": None}

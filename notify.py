@@ -189,6 +189,48 @@ def send(conn, config: dict, title: str, body: str) -> None:
     print(f"[通知] {sent} / {len(targets)} 台に送りました", flush=True)
 
 
+def reminders(conn, now, rules: dict) -> list[str]:
+    """放送前・締切前のリマインド。同じ予定・同じ段階では1回だけ知らせる。
+
+    - 出演: 開始時刻があれば、開始までが「次の更新まで（3時間）」以内になった回で。なければ当日の朝
+    - チケット: 前日（9時以降）と当日の朝
+    - 発売日・コンサート・イベント: 前日（9時以降）
+    """
+    from datetime import datetime, timedelta
+    if not rules.get("reminders", True):
+        return []
+    try:
+        rows = conn.execute("SELECT id, kind, date, time, title, date_text FROM events WHERE date != ''").fetchall()
+    except Exception:
+        return []
+    today, tomorrow = now.date().isoformat(), (now.date() + timedelta(days=1)).isoformat()
+    lines = []
+
+    def once(key: str, line: str):
+        if get_state(conn, "remind:" + key) is None:
+            conn.execute("INSERT INTO watch_state (key, value) VALUES (?, '1') ON CONFLICT(key) DO NOTHING",
+                         ("remind:" + key,))
+            lines.append(line)
+
+    for eid, kind, day, hhmm, title, date_text in rows:
+        if kind == "出演":
+            if hhmm:
+                start = datetime.fromisoformat(f"{day}T{hhmm}")
+                if timedelta(0) < start - now <= timedelta(hours=rules.get("remind_hours", 3)):
+                    once(f"{eid}:soon", f"📺 まもなく {hhmm}〜 {title}")
+            elif day == today and now.hour >= 6:
+                once(f"{eid}:today", f"📺 今日 {title}")
+        elif kind == "チケット":
+            if day == tomorrow and now.hour >= 9:
+                once(f"{eid}:eve", f"🎫 明日 {hhmm + ' ' if hhmm else ''}{title}")
+            if day == today and now.hour >= 6:
+                once(f"{eid}:today", f"🎫 今日 {hhmm + ' ' if hhmm else ''}{title}")
+        elif kind in ("発売日", "コンサート", "イベント") and day == tomorrow and now.hour >= 9:
+            once(f"{eid}:eve", f"{'💿' if kind == '発売日' else '🎤' if kind == 'コンサート' else '🎉'} 明日 {title}")
+    conn.commit()
+    return lines
+
+
 def main() -> int:
     config = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
     conn = open_db()
@@ -201,7 +243,8 @@ def main() -> int:
     if row is None:
         print("[通知] 初回のため、今の状態を覚えるだけにします")
     else:
-        lines = changes(json.loads(row[0]), cur, rules)
+        from datetime import datetime
+        lines = reminders(conn, datetime.now(), rules) + changes(json.loads(row[0]), cur, rules)
         max_lines = rules.get("max_lines", 4)
         if lines:
             body = "\n".join(lines[:max_lines]) + (f"\nほか {len(lines) - max_lines} 件" if len(lines) > max_lines else "")

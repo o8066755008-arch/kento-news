@@ -120,7 +120,7 @@ svg.spark{width:100%;height:46px;margin-top:6px}
 .pastbox summary{color:var(--sub);font-weight:700;cursor:pointer;padding:6px 0}
 .evd small:first-child{display:block}
 .evlink{display:inline-block;margin-top:8px;color:var(--accent);font-weight:700;font-size:.82rem;text-decoration:none}
-.nx{display:grid;grid-template-columns:3.2em 1fr auto;gap:8px;align-items:center;margin-top:8px;font-size:.88rem}
+.nx{display:grid;grid-template-columns:5.2em 1fr auto;gap:8px;align-items:center;margin-top:8px;font-size:.88rem}
 .nx b{color:var(--accent)}
 .nx .src{border-radius:6px;padding:1px 6px;font-weight:700;font-size:.7rem;background:var(--line);color:var(--sub)}
 .nx .src.t1{background:var(--accent);color:#fff}
@@ -131,6 +131,13 @@ svg.spark{width:100%;height:46px;margin-top:6px}
 .snsn:last-of-type{border-bottom:0}
 .snsn b{display:block;font-size:.88rem;line-height:1.5}
 .snsn small{color:var(--sub);font-size:.75rem}
+.dome .dm{display:flex;align-items:baseline;gap:8px;margin-top:10px}
+.dome .dm span:first-child{color:var(--sub);font-size:.8rem;width:4.5em}
+.dome .dm b{font-size:1.25rem}
+.dome .dm .pct{margin-left:auto;color:var(--accent);font-weight:700;font-size:.85rem}
+.dbar{height:10px;background:var(--line);border-radius:999px;overflow:hidden;margin-top:6px}
+.dbar span{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--deep));border-radius:999px}
+footer{max-width:720px;margin:0 auto;padding:0 16px calc(28px + env(safe-area-inset-bottom));color:var(--sub);font-size:.72rem;line-height:1.6;text-align:center}
 .cbar{display:grid;grid-template-columns:9.6em 1fr 3.2em;gap:8px;align-items:center;margin-top:8px;font-size:.82rem}
 .cbar .cn{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cbar .ct{display:block;height:12px}
@@ -183,6 +190,8 @@ svg.spark{width:100%;height:46px;margin-top:6px}
   <section id="events" data-section hidden></section>
   <section id="fanclub" data-section hidden></section>
 </main>
+<footer>このアプリはファンが個人で作った<b>非公式</b>のまとめアプリです。STARTO ENTERTAINMENT・ソニーミュージック・ご本人とは関係ありません。<br>
+記事・番組・画像の権利は各配信元にあります。歌詞・公式写真は掲載しません。チケットは必ず公式の窓口で購入してください。</footer>
 <script>
 const LANG = {all: "すべて", ja: "日本", ko: "韓国", zh: "台湾・香港", th: "タイ", vi: "ベトナム",
   id: "インドネシア", en: "英語圏", es: "中南米", pt: "ブラジル", fr: "フランス"};
@@ -219,6 +228,31 @@ function rankOf(pick, name) {
     .sort((a, b) => b.p.value - a.p.value);
   const i = rows.findIndex(r => r.n === name);
   return i < 0 ? null : {no: i + 1, of: rows.length};
+}
+
+// ---- 東京ドームへの道（本人が宣言している目標。目安として FC 会員数を 2 日公演の収容人数と比べる）
+const DOME_CAPACITY = 55000, DOME_DAYS = 2;
+function growth(pts) {
+  if (!pts || pts.length < 2) return null;
+  const a = pts[0], b = pts.at(-1);
+  const days = Math.max(1, Math.round((new Date(b.date) - new Date(a.date)) / 864e5));
+  return {diff: b.value - a.value, days, from: a.date};
+}
+function domeTile(g) {
+  const target = DOME_CAPACITY * DOME_DAYS;
+  const fcPts = [...(g.estimate || []), ...(g.member_no || [])].sort((a, b) => a.date.localeCompare(b.date));
+  const fc = fcPts.length ? Math.max(...fcPts.map(p => p.value)) : null;
+  const pct = fc ? Math.min(100, Math.round(fc / target * 100)) : 0;
+  const yt = g.youtube || [], ytG = growth(yt), fcG = growth(fcPts);
+  const shortN = v => v >= 10000 ? (v / 10000).toLocaleString("ja-JP", {maximumFractionDigits: 1}) + "万" : num(v);
+  return `<div class="tile wide dome"><div class="lb">🏟 東京ドームへの道</div>
+    <div class="sub">「必ずドームに連れていく」（2026年7月・ツアー最終日）</div>
+    ${fc ? `<div class="dm"><span>FC会員</span><b>${shortN(fc)}人</b><span class="pct">${pct}%</span></div>
+      <div class="dbar"><span style="width:${pct}%"></span></div>
+      <div class="sub">ドーム2日公演（約${shortN(target)}人）が目安 ${fc < target ? `・あと約${shortN(target - fc)}人` : "・目安に到達 🎉"}${fcG && fcG.diff ? `・${fcG.from}から +${shortN(fcG.diff)}` : ""}</div>` : ""}
+    ${yt.length ? `<div class="dm"><span>YouTube</span><b>${shortN(yt.at(-1).value)}人</b>
+      <span class="pct">${ytG ? (ytG.diff >= 0 ? "+" : "") + shortN(ytG.diff) + `（${ytG.days}日）` : "記録開始"}</span></div>` : ""}
+    <div class="note">東京ドームの収容人数（約5.5万人）×2日を目安にした、アプリ独自の進捗です。公式の基準ではありません。</div></div>`;
 }
 
 function renderDash() {
@@ -260,13 +294,13 @@ function renderDash() {
       <span class="ct"><span class="cf" style="width:${Math.max(3, c / maxC * 100)}%"></span></span>
       <span class="cv">${c}件</span></div>`).join("")}
     <div class="sub">記事の言語・配信地域で数えています（台湾・香港は中国語、英語圏はアメリカ・シンガポール・フィリピンなど）。日本のメディアは ${d30.length - abroad30.length}件。</div></div>` : "";
-  const next = upcomingEvents().filter(e => e.date).slice(0, 3);
+  const next = upcomingEvents().filter(e => e.date).slice(0, 4);
   const nextTile = `<div class="tile wide"><div class="lb">🗓 次の予定</div>
-    ${next.length ? next.map(e => `<div class="nx"><b>${Number(e.date.slice(5, 7))}/${Number(e.date.slice(8))}</b>
+    ${next.length ? next.map(e => `<div class="nx"><b>${Number(e.date.slice(5, 7))}/${Number(e.date.slice(8))}${e.time ? `<small> ${esc(e.time)}</small>` : ""}</b>
       <span>${KIND_ICON[e.kind] || "📌"} ${esc(e.title)}</span><span class="src t${e.tier}">${esc(e.label)}</span></div>`).join("")
       : `<div class="sub">日付の決まった予定はまだありません</div>`}
     <button class="pbtn ghost" data-goto="events">予定をすべて見る</button></div>`;
-  el.innerHTML = `<h2 class="sec">${DASH_NAME} ダッシュボード</h2><div class="dash">${nextTile}${fcTile}${ytTile}${newsTile}${abroadTile}${countryTile}
+  el.innerHTML = `<h2 class="sec">${DASH_NAME} ダッシュボード</h2><div class="dash">${nextTile}${domeTile(g)}${fcTile}${ytTile}${newsTile}${abroadTile}${countryTile}
     <div class="tile wide" id="push"></div></div>`;
   renderPush();
 }
@@ -445,8 +479,8 @@ function renderNews() {
 }
 
 // ---- イベント
-const KIND_ICON = {出演: "📺", イベント: "🎉", コンサート: "🎤", 発売日: "💿", オフ会: "🤝", その他: "📌"};
-const MAIN_KINDS = ["出演", "イベント", "コンサート", "発売日"];  // 予定がなくても常に表示するカテゴリ
+const KIND_ICON = {出演: "📺", イベント: "🎉", コンサート: "🎤", 発売日: "💿", チケット: "🎫", オフ会: "🤝", その他: "📌"};
+const MAIN_KINDS = ["出演", "イベント", "コンサート", "発売日", "チケット"];  // 予定がなくても常に表示するカテゴリ
 let evFilter = "all";
 const localToday = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
 // これからの予定（日付順・同じ日なら信頼度の高い情報源が先）と、終わった予定に分ける
@@ -457,7 +491,7 @@ function eventCard(e) {
   const past = e.date && e.date < localToday();
   const d = e.date ? new Date(e.date + "T00:00:00") : null;
   return `<div class="card ev${past ? " past" : ""}">
-    <div class="evd">${d ? `<small>${d.getFullYear()}</small><b>${d.getMonth() + 1}/${d.getDate()}</b><small>${"日月火水木金土"[d.getDay()]}</small>` : `<small>日付<br>未定</small>`}</div>
+    <div class="evd">${d ? `<small>${d.getFullYear()}</small><b>${d.getMonth() + 1}/${d.getDate()}</b><small>${"日月火水木金土"[d.getDay()]}${e.time ? `<br>${esc(e.time)}` : ""}</small>` : `<small>日付<br>未定</small>`}</div>
     <div class="evb"><div class="t">${KIND_ICON[e.kind] || "📌"} ${esc(e.title)}</div>
       <div class="meta"><span class="src t${e.tier}">${esc(e.label)}</span>${e.region === "海外" ? `<span class="chip">🌏 海外</span>` : ""}
         ${e.place ? `<span>📍 ${esc(e.place)}</span>` : ""}${e.date_text ? `<span>${esc(e.date_text)}</span>` : ""}

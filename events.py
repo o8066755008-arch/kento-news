@@ -28,7 +28,7 @@ EVENT_WORDS = re.compile(
     r"콘서트|투어|팬미팅|공연|내한|演唱會|巡演|見面會|粉絲見面|簽名會|คอนเสิร์ต|แฟนมีต",
     re.IGNORECASE)
 
-VERSION = 6  # 読み取り方を変えたら上げる（それまでのイベントを消して読み直す）
+VERSION = 7  # 読み取り方を変えたら上げる（それまでのイベントを消して読み直す）
 
 # イベントを探すためのニュース検索（Google ニュース）: (検索語, hl, gl, ceid)
 EVENT_QUERIES = [
@@ -44,7 +44,8 @@ EVENT_QUERIES = [
 SYSTEM = (
     "あなたは中島健人さんのファン向けのイベント情報担当です。渡されたテキストから、"
     "中島健人さんが出る（またはファンが集まる）具体的な予定を抜き出してください。\n"
-    "- kind は「出演」「イベント」「コンサート」「発売日」「オフ会」「その他」のどれかにします。"
+    "- kind は「出演」「イベント」「コンサート」「発売日」「チケット」「オフ会」「その他」のどれかにします。"
+    "チケットの受付開始・申込締切・当落発表・入金締切は「チケット」にして、title に「○○公演 FC先行 申込締切」のように段階を書きます。"
     "ライブ・コンサート・ツアー・フェスは「コンサート」、ファンミーティング・舞台挨拶・サイン会・展示・映画祭などは「イベント」、"
     "テレビ・ラジオ・配信番組・映画やドラマの放送などへの出演は「出演」、CD・Blu-ray・DVD・グッズ・写真集の発売や、作品の配信開始は「発売日」、"
     "ファンが主催する集まりは「オフ会」です。\n"
@@ -55,6 +56,7 @@ SYSTEM = (
     "- 記事の日付の時点ですでに終わっていた予定・始まっていた番組は入れないでください。\n"
     "- date は開催日（期間なら初日）を YYYY-MM-DD、日付がわからなければ空文字。"
     "date_text は「2026年11月3日〜5日」のように年も付けた日本語で書きます。"
+    "time は開始時刻（放送開始・開演・締切の時刻）を 24 時間表記の HH:MM で（深夜0:30 は 24:30 ではなく翌日の 00:30 とし date も翌日にする）、わからなければ空文字。"
     "year_certain は、年が本文に書かれている・記事の日付からはっきり決められるなら true、推測なら false。\n"
     "- 番組表のページでは、これから放送される番組だけを1つずつ（放送日時・局つきで）入れます。"
     "過去の出演作の一覧や、放送日の書かれていない作品紹介は入れないでください。\n"
@@ -78,9 +80,10 @@ SCHEMA = {
                 "type": "object",
                 "properties": {
                     "title": {"type": "string"},
-                    "kind": {"type": "string", "enum": ["出演", "イベント", "コンサート", "発売日", "オフ会", "その他"]},
+                    "kind": {"type": "string", "enum": ["出演", "イベント", "コンサート", "発売日", "チケット", "オフ会", "その他"]},
                     "date": {"type": "string"},
                     "date_text": {"type": "string"},
+                    "time": {"type": "string"},
                     "place": {"type": "string"},
                     "region": {"type": "string", "enum": ["国内", "海外"]},
                     "year_certain": {"type": "boolean"},
@@ -89,7 +92,7 @@ SCHEMA = {
                     "link": {"type": "string"},
                     "source_id": {"type": "integer"},
                 },
-                "required": ["title", "kind", "date", "date_text", "place", "region", "year_certain", "station", "first_run", "link", "source_id"],
+                "required": ["title", "kind", "date", "date_text", "time", "place", "region", "year_certain", "station", "first_run", "link", "source_id"],
                 "additionalProperties": False,
             },
         }
@@ -118,7 +121,8 @@ def open_events(conn):
     conn.execute("UPDATE events SET kind = 'コンサート' WHERE kind = 'ライブ'")
     conn.execute("UPDATE events SET kind = '発売日' WHERE kind = '発売・配信'")
     cols = {r[1] for r in conn.execute("PRAGMA table_info(events)")}
-    for col, decl in [("tier", "INTEGER DEFAULT 4"), ("source_label", "TEXT"), ("year_certain", "INTEGER DEFAULT 1")]:
+    for col, decl in [("tier", "INTEGER DEFAULT 4"), ("source_label", "TEXT"), ("year_certain", "INTEGER DEFAULT 1"),
+                      ("time", "TEXT DEFAULT ''")]:
         if col not in cols:
             conn.execute(f"ALTER TABLE events ADD COLUMN {col} {decl}")
     return conn
@@ -198,8 +202,9 @@ def save_events(conn, events: list[dict], sources: list[dict]) -> int:
             if station and not NATIONWIDE.search(station):
                 print(f"[イベント] 地方局の放送のため除外: {e['date_text']} {e['title']}（{station}）")
                 continue
+        hhmm = e.get("time", "") if re.fullmatch(r"([01]\d|2[0-3]):[0-5]\d", e.get("time", "")) else ""
         values = (e["title"], e["kind"], day, e["date_text"], e["place"], e["region"],
-                  src["url"], src["source"], tier, src.get("label", "ニュース"), int(e.get("year_certain", True)))
+                  src["url"], src["source"], tier, src.get("label", "ニュース"), int(e.get("year_certain", True)), hhmm)
         dup = same_event(conn, e["title"], day)
         if dup:
             # 日付のない方を、日付のある同じ予定で置き換える
@@ -209,14 +214,14 @@ def save_events(conn, events: list[dict], sources: list[dict]) -> int:
                              (src["url"], dup[0], src.get("page_url")))
             if (tier < (dup[1] or NEWS_TIER) and (day or not dup[2])) or (day and not dup[2]):
                 conn.execute("UPDATE events SET title=?, kind=?, date=?, date_text=?, place=?, region=?, url=?, "
-                             "source=?, tier=?, source_label=?, year_certain=? WHERE id = ?", values + (dup[0],))
+                             "source=?, tier=?, source_label=?, year_certain=?, time=? WHERE id = ?", values + (dup[0],))
             continue
         eid = event_id(e["title"], day)
         if conn.execute("SELECT 1 FROM events WHERE id = ?", (eid,)).fetchone():
             continue
         conn.execute(
             "INSERT INTO events (title, kind, date, date_text, place, region, url, source, tier, source_label, "
-            "year_certain, id, found_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            "year_certain, time, id, found_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             values + (eid, today.isoformat()),
         )
         added += 1
@@ -340,6 +345,26 @@ def from_pages(conn, pages: list[dict]) -> None:
     set_state(conn, f"events_daily{VERSION}", today)
 
 
+MANUAL_PATH = Path(__file__).resolve().parent / "manual_events.json"
+
+
+def load_manual(conn) -> None:
+    """manual_events.json に人が書いた予定（FC 会員ページやメールで知った先行受付の日程など）を毎回取り込む。"""
+    if not MANUAL_PATH.exists():
+        return
+    for m in json.loads(MANUAL_PATH.read_text(encoding="utf-8")).get("entries", []):
+        eid = "manual-" + event_id(m["title"], m["date"])
+        conn.execute(
+            "INSERT INTO events (id, title, kind, date, date_text, time, place, region, url, source, tier, "
+            "source_label, year_certain, found_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, '手入力', 1, ?) "
+            "ON CONFLICT(id) DO UPDATE SET kind=excluded.kind, date_text=excluded.date_text, time=excluded.time, "
+            "place=excluded.place, url=excluded.url",
+            (eid, m["title"], m["kind"], m["date"], m.get("date_text", m["date"]), m.get("time", ""),
+             m.get("place", ""), m.get("region", "国内"), m.get("url", ""), m.get("note", "手入力"),
+             date.today().isoformat()))
+    conn.commit()
+
+
 def main() -> int:
     config = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
     conn = open_events(open_db())
@@ -350,6 +375,7 @@ def main() -> int:
         print("[イベント] 読み取り方を更新したため、イベントを読み直します")
     from_news(conn)
     from_pages(conn, config.get("event_pages", []))
+    load_manual(conn)
     return 0
 
 
