@@ -15,8 +15,18 @@ def build(conn, out: Path = SITE_DIR / "data.json", limit: int = 3000) -> dict:
          "published": published, "link": link, "image": image, "kind": kind or "news"}
         for title, title_ja, lang, source, published, link, image, kind in conn.execute(
             "SELECT title, title_ja, lang, source, published, link, image, kind FROM articles "
-            "ORDER BY published DESC LIMIT ?", (limit,))
+            "WHERE COALESCE(kind, 'news') != 'starto' ORDER BY published DESC LIMIT ?", (limit,))
     ]
+    # STARTO のグループ別ニュース（ここ7日・各グループ新しい順に最大40件）
+    starto: dict[str, list] = {}
+    since7 = time.strftime("%Y-%m-%d", time.localtime(time.time() - 7 * 86400))
+    for grp, title, source, published, link, image in conn.execute(
+            "SELECT grp, title, source, published, link, image FROM articles "
+            "WHERE kind = 'starto' AND published >= ? ORDER BY published DESC", (since7,)):
+        lst = starto.setdefault(grp, [])
+        if len(lst) < 40:
+            lst.append({"title": title, "source": source, "published": published, "link": link, "image": image,
+                        "lang": "ja", "kind": "starto"})
     # {グループ: {metric: [{date, value, source}, ...]}}
     fanclub: dict[str, dict] = {}
     for day, grp, metric, value, source in conn.execute(
@@ -46,7 +56,7 @@ def build(conn, out: Path = SITE_DIR / "data.json", limit: int = 3000) -> dict:
     groups_meta = {g["name"]: {"solo": g.get("solo", False), "ended": g.get("ended", False)}
                    for g in config["groups"]}
     data = {"updated": time.strftime("%Y-%m-%d %H:%M"), "news": news, "digest": digest, "fanclub": fanclub,
-            "groups_meta": groups_meta, "events": events,
+            "groups_meta": groups_meta, "events": events, "starto": starto,
             "vapid_public_key": config.get("notify", {}).get("vapid_public_key", ""),
             "subscribe_form": config.get("notify", {}).get("subscribe_form"),
             "fan_form_url": config.get("fan_form_url", "")}

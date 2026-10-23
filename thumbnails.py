@@ -105,7 +105,7 @@ def main() -> int:
     conn = open_db()
     rows = conn.execute(
         "SELECT link FROM articles WHERE image IS NULL AND COALESCE(image_tried, 0) = 0 "
-        "ORDER BY published DESC LIMIT ?", (MAX_PER_RUN,)
+        "ORDER BY COALESCE(kind, 'news') = 'starto', published DESC LIMIT ?", (MAX_PER_RUN,)
     ).fetchall()
     found = 0
     for (link,) in rows:

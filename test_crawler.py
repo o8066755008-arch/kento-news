@@ -10,6 +10,7 @@ import digest
 import notify
 import events
 import videos
+import starto
 import thumbnails
 import fanclub
 
@@ -288,6 +289,28 @@ class CrawlerTest(unittest.TestCase):
         crawler.save(self.conn, [it])
         self.assertEqual(self.conn.execute("SELECT kind, image FROM articles").fetchall(),
                          [("video", "https://i.ytimg.com/vi/abc/hq.jpg")])
+
+    def test_yahoo_parse(self):
+        from datetime import datetime
+        html = ('<li><a href="https://news.yahoo.co.jp/articles/abc123def?source=rss" class="x">'
+                '<div><p>中島健人、新ドラマで主演決定</p><span>スポニチ</span><time>10/22(水) 9:15</time></div></a></li>'
+                '<a href="https://news.yahoo.co.jp/articles/abc123def">重複</a>').encode()
+        items = crawler.parse_yahoo(html, now=datetime(2026, 10, 23))
+        self.assertEqual(len(items), 1)
+        self.assertEqual((items[0]["title"], items[0]["source"], items[0]["link"]),
+                         ("中島健人、新ドラマで主演決定", "スポニチ", "https://news.yahoo.co.jp/articles/abc123def"))
+        self.assertTrue(items[0]["published"].startswith("2026-10-22T09:15"))
+
+    def test_starto_queries_and_kept_apart(self):
+        qs = dict(starto.queries([{"name": "中島健人"}, {"name": "NEWS"}, {"name": "Snow Man"}]))
+        self.assertNotIn("中島健人", qs)
+        self.assertIn("加藤シゲアキ", qs["NEWS"])
+        self.assertEqual(qs["Snow Man"], '"Snow Man" when:3d')
+        it = {"title": "Snow Man 新曲", "link": "https://s/1", "source": "s", "published": "2026-10-22T00:00:00+00:00",
+              "lang": "ja", "title_ja": "Snow Man 新曲", "kind": "starto", "grp": "Snow Man"}
+        crawler.save(self.conn, [it])
+        from datetime import datetime, timezone
+        self.assertEqual(digest.recent_articles(self.conn, datetime(2026, 10, 23, tzinfo=timezone.utc)), [])
 
     def test_notify_new_event(self):
         prev = {"topics": [], "events": ["a|11/3 ライブ"], "youtube": None, "fc": None, "member_no": None,

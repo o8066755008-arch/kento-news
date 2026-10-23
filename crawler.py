@@ -32,25 +32,20 @@ HEADERS = {
 EN_QUERY = '"Kento Nakajima" OR "Nakajima Kento"'
 
 # Google ニュース: (言語, 検索語, hl, gl, ceid)
+# 国内を手厚く。海外は有力な情報が少なかったので、韓国・台湾・英語圏の3つに絞る
 SOURCES = [
     ("ja", "中島健人", "ja", "JP", "JP:ja"),
+    # 期間を区切った検索は、新しい記事が上位100件に入りやすい（取りこぼしを減らす）
+    ("ja", "中島健人 when:1d", "ja", "JP", "JP:ja"),
+    ("ja", "中島健人 when:7d", "ja", "JP", "JP:ja"),
+    ("ja", "(ケンティー OR KENTY) when:7d", "ja", "JP", "JP:ja"),
     # 公式 SNS（Instagram・X・TikTok）の投稿は、規約上アプリから直接は集められないので、投稿を取り上げた記事で拾う
     ("ja", "中島健人 (インスタ OR Instagram OR インスタグラム OR TikTok OR SNS OR ポスト OR 投稿 OR 更新)", "ja", "JP", "JP:ja"),
     ("ko", "나카지마 켄토", "ko", "KR", "KR:ko"),
     ("en", EN_QUERY, "en-US", "US", "US:en"),
-    ("en", EN_QUERY, "en-SG", "SG", "SG:en"),
-    ("en", EN_QUERY, "en-PH", "PH", "PH:en"),
     ("zh", "中島健人 OR 中岛健人", "zh-TW", "TW", "TW:zh-Hant"),
-    ("zh", "中島健人 OR 中岛健人", "zh-HK", "HK", "HK:zh-Hant"),
-    ("th", f"นากาจิมะ เคนโตะ OR {EN_QUERY}", "th", "TH", "TH:th"),
-    ("vi", EN_QUERY, "vi", "VN", "VN:vi"),
-    ("id", EN_QUERY, "id", "ID", "ID:id"),
-    ("es", EN_QUERY, "es-419", "MX", "MX:es-419"),
-    ("pt", EN_QUERY, "pt-BR", "BR", "BR:pt-419"),
-    ("fr", EN_QUERY, "fr", "FR", "FR:fr"),
 ]
 
-# Bing ニュース: (言語, 検索語, market)。リンクが記事に直接つながり、サムネイルも付く
 # 1つの検索で取れる記事は100件までなので、話題ごとに分けて検索して取りこぼしを減らす（直近30日）
 JP_TOPICS = [
     "ドラマ", "映画", "CM OR 広告 OR アンバサダー", "雑誌 OR 表紙 OR グラビア OR 撮り下ろし", "インタビュー OR コメント",
@@ -61,22 +56,24 @@ JP_TOPICS = [
 ]
 TOPIC_SOURCES = (
     [("ja", f"中島健人 ({t}) when:30d", "ja", "JP", "JP:ja") for t in JP_TOPICS]
-    + [("ja", "(ケンティー OR KENTY OR けんてぃー) when:30d", "ja", "JP", "JP:ja"),
-       ("ko", "(나카지마 켄토 OR 켄티) (드라마 OR 콘서트 OR 팬미팅 OR 영화 OR 방송) when:30d", "ko", "KR", "KR:ko"),
-       ("zh", "中島健人 (日劇 OR 演唱會 OR 電影 OR 綜藝 OR 粉絲) when:30d", "zh-TW", "TW", "TW:zh-Hant"),
-       ("en", f"({EN_QUERY}) (drama OR Netflix OR concert OR film OR interview) when:30d", "en-US", "US", "US:en")]
+    + [("ja", "(ケンティー OR KENTY OR けんてぃー) when:30d", "ja", "JP", "JP:ja")]
 )
 
 BING_SOURCES = [
     ("ja", "中島健人", "ja-JP"),
-    ("ko", "나카지마 켄토", "ko-KR"),
-    ("en", "Kento Nakajima", "en-US"),  # Bing は OR と引用符の組み合わせで0件になるため
-    ("zh", "中島健人", "zh-TW"),
-    ("th", "Kento Nakajima", "th-TH"),
     ("ja", "ケンティー", "ja-JP"),
     ("ja", "中島健人 ドラマ", "ja-JP"),
+    ("ja", "中島健人 映画", "ja-JP"),
     ("ja", "中島健人 ライブ", "ja-JP"),
+    ("ja", "中島健人 出演", "ja-JP"),
+    ("ja", "中島健人 雑誌", "ja-JP"),
+    ("ja", "中島健人 CM", "ja-JP"),
+    ("ja", "中島健人 timelesz", "ja-JP"),
+    ("en", "Kento Nakajima", "en-US"),  # Bing は OR と引用符の組み合わせで0件になるため
 ]
+
+# Yahoo!ニュースの検索（RSS がないので検索結果のページから見出しとリンクだけを読む。robots.txt で許可されているときだけ）
+YAHOO_QUERIES = ["中島健人", "ケンティー"]
 
 
 def feed_url(query: str, hl: str, gl: str, ceid: str) -> str:
@@ -147,6 +144,39 @@ def parse_bing_rss(xml_bytes: bytes, lang: str) -> list[dict]:
 TRUNCATED = re.compile(r"\s*(\.\.\.|…)\s*$")
 
 
+def yahoo_url(query: str) -> str:
+    return f"https://news.yahoo.co.jp/search?p={urllib.parse.quote(query)}&ei=utf-8"
+
+
+def parse_yahoo(html_bytes: bytes, lang: str = "ja", now=None) -> list[dict]:
+    """Yahoo!ニュースの検索結果から、記事ごとの見出し・配信元・日時・リンクを取り出す。"""
+    import html as htmllib
+    from datetime import datetime
+    now = now or datetime.now()
+    text = html_bytes.decode("utf-8", errors="replace")
+    items, seen = [], set()
+    for m in re.finditer(r'<a[^>]+href="(https://news\.yahoo\.co\.jp/articles/[0-9a-f]+)[^"]*"[^>]*>(.*?)</a>', text, re.S):
+        link = m.group(1)
+        if link in seen:
+            continue
+        parts = [htmllib.unescape(p).strip() for p in re.split(r"<[^>]+>", m.group(2))]
+        parts = [p for p in parts if p]
+        if not parts:
+            continue
+        seen.add(link)
+        title = max(parts, key=len)
+        published = ""
+        when = re.search(r"(\d{1,2})/(\d{1,2})\([^)]*\)\s*(\d{1,2}):(\d{2})", " ".join(parts))
+        if when:
+            mo, d, h, mi = map(int, when.groups())
+            year = now.year if (mo, d) <= (now.month, now.day) else now.year - 1
+            published = datetime(year, mo, d, h, mi).astimezone().isoformat()
+        source = next((p for p in parts if p != title and not re.search(r"\d{1,2}/\d{1,2}", p) and len(p) <= 30), "")
+        items.append({"title": title, "link": link, "source": source or "Yahoo!ニュース", "published": published,
+                      "lang": lang, "title_ja": title})
+    return items
+
+
 def title_key(title: str) -> str:
     """同じ記事が Google と Bing の両方から来たときに見分けるための見出しの正規化。
 
@@ -183,7 +213,7 @@ def open_db(path: Path = DB_PATH) -> sqlite3.Connection:
     )
     cols = {r[1] for r in conn.execute("PRAGMA table_info(articles)")}
     for col, decl in [("image", "TEXT"), ("title_key", "TEXT"), ("image_tried", "INTEGER DEFAULT 0"),
-                      ("kind", "TEXT DEFAULT 'news'")]:
+                      ("kind", "TEXT DEFAULT 'news'"), ("grp", "TEXT")]:
         if col not in cols:
             conn.execute(f"ALTER TABLE articles ADD COLUMN {col} {decl}")
     missing = conn.execute("SELECT link, title FROM articles WHERE title_key IS NULL "
@@ -219,10 +249,10 @@ def save(conn: sqlite3.Connection, items: list[dict]) -> int:
                 conn.execute("UPDATE articles SET image = ? WHERE link = ?", (it["image"], row[0]))
             continue
         conn.execute(
-            "INSERT INTO articles (link, title, title_ja, lang, source, published, image, title_key, kind) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO articles (link, title, title_ja, lang, source, published, image, title_key, kind, grp) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (it["link"], it["title"], it["title_ja"], it["lang"], it["source"], it["published"],
-             it.get("image"), key, it.get("kind", "news")),
+             it.get("image"), key, it.get("kind", "news"), it.get("grp")),
         )
         added += 1
     conn.commit()
@@ -277,7 +307,14 @@ def main() -> int:
              for lang, q, hl, gl, ceid in SOURCES]
     feeds += [(lang, f"Google {gl}「{q[:24]}」", feed_url(q, hl, gl, ceid), parse_rss)
               for lang, q, hl, gl, ceid in TOPIC_SOURCES]
-    feeds += [(lang, f"Bing {mkt}", bing_url(q, mkt), parse_bing_rss) for lang, q, mkt in BING_SOURCES]
+    feeds += [(lang, f"Bing {mkt}「{q}」", bing_url(q, mkt), parse_bing_rss) for lang, q, mkt in BING_SOURCES]
+    import thumbnails
+    for q in YAHOO_QUERIES:
+        url = yahoo_url(q)
+        if thumbnails.allowed(url):
+            feeds.append(("ja", f"Yahoo!ニュース「{q}」", url, parse_yahoo))
+        else:
+            print(f"[Yahoo!ニュース] robots.txt で禁止されているため読みません: {url}")
     for lang, name, url, parser in feeds:
         body = b""
         try:

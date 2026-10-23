@@ -247,7 +247,7 @@ def event_candidates(conn) -> list[tuple[str, str, str, str]]:
     found: dict[str, tuple] = {}
     for link, title, ja, src, pub in conn.execute(
             "SELECT link, title, COALESCE(title_ja, title), source, published FROM articles "
-            "WHERE published >= ?", (since,)):
+            "WHERE published >= ? AND COALESCE(kind, 'news') != 'starto'", (since,)):
         if EVENT_WORDS.search(title) or EVENT_WORDS.search(ja):
             found[link] = (link, ja, src, pub)
     for q, hl, gl, ceid in EVENT_QUERIES:

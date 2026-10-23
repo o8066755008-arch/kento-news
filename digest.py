@@ -63,7 +63,7 @@ def recent_articles(conn, now: datetime) -> list[dict]:
     since = (now - timedelta(days=DAYS)).astimezone(timezone.utc).isoformat()
     rows = conn.execute(
         "SELECT link, COALESCE(title_ja, title), lang, source, published FROM articles "
-        "WHERE published >= ? ORDER BY published DESC",
+        "WHERE published >= ? AND COALESCE(kind, 'news') != 'starto' ORDER BY published DESC",
         (since,),
     ).fetchall()
     return [{"link": link, "title": title, "lang": lang, "source": source, "published": pub}
