@@ -41,7 +41,8 @@ def to_item(video_id: str, sn: dict) -> dict:
     thumb = (sn.get("thumbnails", {}).get("high") or sn.get("thumbnails", {}).get("medium") or {}).get("url")
     return {"title": title, "link": f"https://www.youtube.com/watch?v={video_id}",
             "source": f"YouTube・{sn.get('channelTitle', '')}", "published": sn.get("publishedAt", ""),
-            "lang": lang, "title_ja": title if lang == "ja" else None, "image": thumb, "kind": "video"}
+            "lang": lang, "title_ja": title if lang == "ja" else None, "image": thumb, "kind": "video",
+            "desc": sn.get("description", "")}
 
 
 def official_uploads(key: str) -> list[dict]:

@@ -137,6 +137,7 @@ def parse_bing_rss(xml_bytes: bytes, lang: str) -> list[dict]:
                 "published": published, "lang": lang,
                 "title_ja": title if lang == "ja" else None,
                 "image": re.sub(r"^http://", "https://", extra.get("Image", "")) or None,
+                "desc": extra.get("description", ""),
             })
     return items
 
@@ -175,6 +176,30 @@ def parse_yahoo(html_bytes: bytes, lang: str = "ja", now=None) -> list[dict]:
         items.append({"title": title, "link": link, "source": source or "Yahoo!ニュース", "published": published,
                       "lang": lang, "title_ja": title})
     return items
+
+
+# 中島健人さんの記事かどうかを見分ける言葉（名前の各国語表記・愛称と、出演作・作品名）。
+# 検索サイトは名前の入っていない記事も返すので、見出し（と要約）にこのどれかが入っている記事だけを残す
+KENTO = re.compile(
+    r"中島\s*健人|ケンティー?|けんてぃー|KENTY|健人くん|けんとくん|Kento\s*Nakajima|Nakajima\s*Kento|"
+    r"나카지마\s*켄토|켄티|中岛健人|นากาจิมะ|เคนโตะ|"
+    r"桜のような僕の恋人|SとX|S&X|ラブ\s*≠\s*コメディ|LOVE\s*≠\s*COMEDY|ちるらん|知らないカノジョ|"
+    r"黒崎くんの言いなり|未成年だけどコドモじゃない|僕のことを知らない彼女|彼女はキレイだった|コンビニ兄弟|銀の匙|"
+    r"IDOL1ST|鬼事|Fiction Love|I AM:U",
+    re.IGNORECASE)
+
+
+def about_kento(*texts: str | None) -> bool:
+    return any(t and KENTO.search(t) for t in texts)
+
+
+def purge_unrelated(conn) -> int:
+    """以前に集めた、中島健人さんと関係のない記事（名前も作品名も入っていないもの）を消す。"""
+    rows = conn.execute("SELECT link, title, title_ja FROM articles WHERE COALESCE(kind, 'news') != 'starto'").fetchall()
+    bad = [link for link, t, ja in rows if not about_kento(t, ja)]
+    conn.executemany("DELETE FROM articles WHERE link = ?", [(b,) for b in bad])
+    conn.commit()
+    return len(bad)
 
 
 def title_key(title: str) -> str:
@@ -242,6 +267,9 @@ def save(conn: sqlite3.Connection, items: list[dict]) -> int:
     """新しい記事を保存する。同じ見出しの記事がすでにあれば、画像だけ補って保存しない。"""
     added = 0
     for it in items:
+        # STARTO のグループ別ニュース以外は、中島健人さんの記事だけを残す
+        if it.get("kind", "news") != "starto" and not about_kento(it["title"], it.get("title_ja"), it.get("desc")):
+            continue
         key = title_key(it["title"])
         row = find_same(conn, it["link"], key)
         if row:
@@ -302,6 +330,7 @@ def remove_duplicates(conn) -> int:
 def main() -> int:
     conn = open_db()
     print(f"重複の整理 {remove_duplicates(conn)} 件")
+    print(f"関係のない記事の整理 {purge_unrelated(conn)} 件")
     total = 0
     feeds = [(lang, f"Google {gl}", feed_url(q, hl, gl, ceid), parse_rss)
              for lang, q, hl, gl, ceid in SOURCES]

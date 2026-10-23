@@ -15,13 +15,13 @@ import thumbnails
 import fanclub
 
 SAMPLE = """<?xml version="1.0"?><rss><channel>
-<item><title>테스트 제목 - 테스트일보</title><link>https://example.com/a</link>
+<item><title>나카지마 켄토 테스트 제목 - 테스트일보</title><link>https://example.com/a</link>
 <pubDate>Wed, 15 Oct 2026 10:00:00 GMT</pubDate><source url="https://example.com">테스트일보</source></item>
 </channel></rss>""".encode()
 
 
 BING = """<?xml version="1.0"?><rss xmlns:News="https://www.bing.com/news/search?q=x&amp;format=rss"><channel>
-<item><title>테스트 제목</title>
+<item><title>나카지마 켄토 테스트 제목</title>
 <link>http://www.bing.com/news/apiclick.aspx?ref=FexRss&amp;aid=&amp;url=https%3a%2f%2fnews.example.kr%2fa1&amp;c=1</link>
 <pubDate>Wed, 15 Oct 2026 12:00:00 GMT</pubDate><News:Source>예시뉴스</News:Source>
 <News:Image>http://www.bing.com/th?id=OVFT.abc&amp;pid=News</News:Image></item>
@@ -46,9 +46,9 @@ class CrawlerTest(unittest.TestCase):
 
     def test_parse_marks_foreign_titles_untranslated(self):
         items = crawler.parse_rss(SAMPLE, "ko")
-        self.assertEqual(items[0]["title"], "테스트 제목")
+        self.assertEqual(items[0]["title"], "나카지마 켄토 테스트 제목")
         self.assertIsNone(items[0]["title_ja"])
-        self.assertEqual(crawler.parse_rss(SAMPLE, "ja")[0]["title_ja"], "테스트 제목")
+        self.assertEqual(crawler.parse_rss(SAMPLE, "ja")[0]["title_ja"], "나카지마 켄토 테스트 제목")
 
     def test_save_dedupes_and_translates(self):
         items = crawler.parse_rss(SAMPLE, "ko")
@@ -60,7 +60,7 @@ class CrawlerTest(unittest.TestCase):
         build_site.build(self.conn, out)
         news = json.loads(out.read_text(encoding="utf-8"))["news"][0]
         self.assertEqual(news["title"], "テスト見出し")
-        self.assertEqual(news["original"], "테스트 제목")
+        self.assertEqual(news["original"], "나카지마 켄토 테스트 제목")
 
     def test_translation_skipped_keeps_pending(self):
         crawler.save(self.conn, crawler.parse_rss(SAMPLE, "ko"))
@@ -122,17 +122,17 @@ class CrawlerTest(unittest.TestCase):
         self.assertEqual(len(crawler.parse_bing_rss(broken, "ko")), 1)
 
     def test_same_headline_from_two_sources_is_saved_once_with_image(self):
-        google = crawler.parse_rss(SAMPLE, "ko")   # 「테스트 제목」画像なし
+        google = crawler.parse_rss(SAMPLE, "ko")   # 「나카지마 켄토 테스트 제목」画像なし
         self.assertEqual(crawler.save(self.conn, google), 1)
         self.assertEqual(crawler.save(self.conn, crawler.parse_bing_rss(BING, "ko")), 0)
         rows = self.conn.execute("SELECT link, image FROM articles").fetchall()
         self.assertEqual(rows, [("https://example.com/a", "https://www.bing.com/th?id=OVFT.abc&pid=News")])
 
     def test_truncated_headline_is_same_article(self):
-        full = [{"title": "중島健人「人集まらなかったらどうしよう」アジアツアーの舞台裏で見せた不安と葛藤",
+        full = [{"title": "中島健人「人集まらなかったらどうしよう」アジアツアーの舞台裏で見せた不安と葛藤",
                  "link": "https://g/1", "source": "s", "published": "2026-10-15", "lang": "ja",
                  "title_ja": "x", "image": None}]
-        cut = [dict(full[0], title="중島健人「人集まらなかったらどうしよう」アジアツアーの舞台 ...",
+        cut = [dict(full[0], title="中島健人「人集まらなかったらどうしよう」アジアツアーの舞台 ...",
                     link="https://b/1", image="https://img/1")]
         self.assertEqual(crawler.save(self.conn, full), 1)
         self.assertEqual(crawler.save(self.conn, cut), 0)
@@ -311,6 +311,16 @@ class CrawlerTest(unittest.TestCase):
         crawler.save(self.conn, [it])
         from datetime import datetime, timezone
         self.assertEqual(digest.recent_articles(self.conn, datetime(2026, 10, 23, tzinfo=timezone.utc)), [])
+
+    def test_only_kento_articles_are_kept(self):
+        mk = lambda t, **kw: dict({"title": t, "link": "https://x/" + t, "source": "s", "published": "2026-10-22",
+                                   "lang": "ja", "title_ja": t}, **kw)
+        n = crawler.save(self.conn, [mk("中島健人、新ドラマ主演"), mk("BTS Vの振付騒動"), mk("ケンティーの神対応"),
+                                     mk("『SとX』配信開始"), mk("別の話題", desc="中島健人さんも出演"),
+                                     mk("Snow Man 新曲", kind="starto", grp="Snow Man")])
+        self.assertEqual(n, 5)
+        self.conn.execute("INSERT INTO articles (link, title, lang) VALUES ('https://old', '関係ない昔の記事', 'ja')")
+        self.assertEqual(crawler.purge_unrelated(self.conn), 2)  # 昔の記事と、要約でだけ名前が出た記事
 
     def test_notify_new_event(self):
         prev = {"topics": [], "events": ["a|11/3 ライブ"], "youtube": None, "fc": None, "member_no": None,
